@@ -26,6 +26,46 @@ def atomic_save(state,path):
     temporary.replace(path)
 
 
+def rescale_learning_rate(optimizer,scheduler,ratio):
+    for group in optimizer.param_groups:
+        group["lr"]*=ratio
+        group["initial_lr"]*=ratio
+    scheduler.base_lrs=[lr*ratio for lr in scheduler.base_lrs]
+    scheduler.eta_min*=ratio
+    scheduler._last_lr=[lr*ratio for lr in scheduler.get_last_lr()]
+
+
+def train_batch(model,optimizer,scaler,source,target,device,amp,max_retries=16):
+    """Retry FP16 gradient overflow without advancing optimizer or sample position."""
+    for attempt in range(max_retries+1):
+        optimizer.zero_grad(set_to_none=True)
+        with torch.autocast(device_type=device,dtype=torch.float16,enabled=amp):
+            prediction=model(source)
+        loss=(prediction.float()-target).square().mean()
+        if not torch.isfinite(loss):
+            raise RuntimeError("Nonfinite training loss; last saved checkpoint retained")
+        scaler.scale(loss).backward()
+        scaler.unscale_(optimizer)
+        gradients=[p.grad for p in model.parameters() if p.grad is not None]
+        finite=bool(torch.stack([torch.isfinite(g).all() for g in gradients]).all())
+        if not finite:
+            if not scaler.is_enabled():
+                raise RuntimeError("Nonfinite training gradients in float32; last saved checkpoint retained")
+            previous_scale=scaler.get_scale()
+            # unscale_ recorded the overflow: step skips the optimizer, update backs off.
+            scaler.step(optimizer)
+            scaler.update()
+            LOG.warning("FP16 gradient overflow; loss scale %g -> %g; retry %d/%d on the same batch",
+                        previous_scale,scaler.get_scale(),attempt+1,max_retries)
+            if attempt==max_retries:
+                raise RuntimeError("Persistent FP16 gradient overflow; last saved checkpoint retained")
+            continue
+        torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
+        scaler.step(optimizer)
+        scaler.update()
+        return loss.detach()
+
+
 def evaluate(model,loader,device,amp):
     model.eval();total=baseline=count=0
     with torch.inference_mode():
@@ -54,6 +94,7 @@ def parser():
     p.add_argument("--validation-batches",type=int,default=32)
     p.add_argument("--averages",type=int,nargs="+",default=[1,2,4])
     p.add_argument("--learning-rate",type=float,default=.001)
+    p.add_argument("--reset-learning-rate",action="store_true",help="On resume, explicitly rescale the saved cosine schedule to --learning-rate")
     p.add_argument("--seed",type=int,default=42)
     p.add_argument("--device",choices=["cuda","cpu"],default="cuda")
     p.add_argument("--precision",choices=["float16","float32"],default="float16")
@@ -66,6 +107,8 @@ def parser():
 
 def main(argv=None):
     args=parser().parse_args(argv)
+    if args.reset_learning_rate and not args.resume:
+        raise ValueError("--reset-learning-rate requires --resume")
     root=args.data_root.resolve()
     if min(args.epochs,args.steps_per_epoch,args.batch_size,args.validation_batches,args.checkpoint_every)<1 or not 0<=args.workers<=4:
         raise ValueError("Positive training counts and 0..4 loader workers required")
@@ -94,12 +137,14 @@ def main(argv=None):
     output.mkdir(parents=True,exist_ok=True)
     logging.basicConfig(level=logging.INFO,format="%(asctime)s %(message)s",handlers=[
         logging.StreamHandler(),logging.FileHandler(output/"training.log",encoding="utf-8")])
-    config={k:v for k,v in vars(args).items() if k not in ("resume","prepare_only","output","data_root","stop_after_steps")}
+    config={k:v for k,v in vars(args).items() if k not in ("resume","prepare_only","output","data_root","stop_after_steps","reset_learning_rate")}
     state=torch.load(args.resume,map_location="cpu",weights_only=True) if args.resume else None
     if state:
         if state["architecture"]!=ARCHITECTURE or state["dataset_sha256"]!=fingerprint:
             raise ValueError("Checkpoint architecture/data differs")
         for key in config:
+            if key=="learning_rate" and args.reset_learning_rate:
+                continue
             if key not in ("workers","checkpoint_every","device") and state["config"][key]!=config[key]:
                 raise ValueError(f"Resume setting differs: {key}; reuse the original run settings")
     random.seed(args.seed);np.random.seed(args.seed);torch.manual_seed(args.seed)
@@ -119,6 +164,11 @@ def main(argv=None):
     if state:
         model.load_state_dict(state["model_state_dict"],strict=True)
         optimizer.load_state_dict(state["optimizer"]);scheduler.load_state_dict(state["scheduler"]);scaler.load_state_dict(state["scaler"])
+        if args.reset_learning_rate:
+            ratio=args.learning_rate/state["config"]["learning_rate"]
+            rescale_learning_rate(optimizer,scheduler,ratio)
+            LOG.warning("Explicit learning-rate recovery: base %g -> %g; schedule position retained",
+                        state["config"]["learning_rate"],args.learning_rate)
         epoch_start=state["epoch"];next_step=state["next_step"];global_step=state["global_step"];best=state["best_validation"]
         loss_sum=state["loss_sum"];sample_count=state["sample_count"]
         LOG.info("Resuming epoch %d, step %d, global step %d",epoch_start+1,next_step,global_step)
@@ -153,15 +203,8 @@ def main(argv=None):
             model.train();sampler.epoch=epoch;sampler.skip=next_step*args.batch_size
             for step,(source,target) in enumerate(loader,start=next_step):
                 source,target=source.to(args.device,non_blocking=True),target.to(args.device,non_blocking=True)
-                optimizer.zero_grad(set_to_none=True)
-                with torch.autocast(device_type=args.device,dtype=torch.float16,enabled=amp):
-                    prediction=model(source)
-                loss=(prediction.float()-target).square().mean()
-                if not torch.isfinite(loss):
-                    raise RuntimeError("Nonfinite training loss; last saved checkpoint retained")
-                scaler.scale(loss).backward();scaler.unscale_(optimizer)
-                torch.nn.utils.clip_grad_norm_(model.parameters(),1.,error_if_nonfinite=True)
-                scaler.step(optimizer);scaler.update();scheduler.step()
+                loss=train_batch(model,optimizer,scaler,source,target,args.device,amp)
+                scheduler.step()
                 global_step+=1;loss_sum+=float(loss.detach())*len(source);sample_count+=len(source)
                 if global_step%25==0 or step==0:
                     LOG.info("epoch %d/%d step %d/%d loss %.6f lr %.6g",epoch+1,args.epochs,step+1,args.steps_per_epoch,float(loss.detach()),scheduler.get_last_lr()[0])

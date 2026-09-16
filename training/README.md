@@ -29,6 +29,20 @@ AMP scaler, epoch, step and deterministic sample positions. Work after the last 
 checkpoint is repeated after an interruption. Numerical bitwise reproducibility across
 different hardware/software is not guaranteed.
 
+For a run whose loss becomes unstable, explicitly lower the learning rate on resume:
+
+```powershell
+.\train_noise2noise.cmd --resume F:\noise2noise_data\runs\noise2noise_confocal\last.pt --learning-rate 0.0001 --reset-learning-rate
+```
+
+This rescales the saved cosine schedule while preserving its position and Adam's
+moments. It records the new base learning rate in subsequent checkpoints. Reusing
+the command is safe: if the checkpoint already uses 0.0001, the scale factor is 1.
+The local `resume_training_recovery.cmd` runs this command. Continue using it after
+recovery, since ordinary resume requires the checkpoint's learning-rate setting.
+The original 0.001 run showed instability at epoch 15; lowering the rate is an
+explicit recovery adjustment, not a guarantee of convergence or denoising quality.
+
 For a short trial with the same full-run learning-rate schedule:
 
 ```powershell
@@ -128,6 +142,13 @@ that approximation. Check biological preservation on held-out data after trainin
 | Optimizer / learning rate | Adam / 0.001, cosine decay to 0.00001 |
 | Validation | 32 fixed batches per epoch, from held-out fields |
 | Checkpoint frequency | Every 250 steps and at each epoch end |
+
+FP16 gradient overflow automatically reduces the loss scale and retries the same
+batch (up to 16 retries). Failed attempts do not advance Adam, the learning-rate
+schedule or sample position. Persistent overflow, nonfinite forward loss and
+nonfinite float32 gradients still stop with an error. Existing checkpoints remain
+compatible; after an interrupted run, use `resume_training.cmd` to continue from
+the last saved step.
 
 `last.pt` is the resumable checkpoint; `best.pt` is selected by fixed validation
 **noisy-target MSE**, not clean-image PSNR. Both contain `model_state_dict` compatible
