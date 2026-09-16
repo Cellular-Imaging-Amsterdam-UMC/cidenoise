@@ -96,6 +96,8 @@ Panels include central XY, a fixed central crop, XZ, maximum projection and sign
 residuals. Display ranges are shared and fixed from brain1. XZ images are stretched for
 inspection. Review weak puncta, fine processes, background texture and introduced or
 removed structures; similarity alone cannot establish biological fidelity.
+Optional manual observations saved as `report/review.html` are linked by the report
+generator and retained when the figures and metrics are regenerated.
 
 ## Docker and BIOMERO
 
