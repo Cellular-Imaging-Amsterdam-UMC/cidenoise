@@ -129,3 +129,8 @@ checkpoint inference, and `tools/verify_models.py` for upstream numerical compar
 licensing are documented in [THIRD_PARTY.md](THIRD_PARTY.md).
 
 See [docs/candidates.md](docs/candidates.md) for deferred denoising methods.
+
+The repository includes a [workflow skill](skills/use-cidenoise-workflow/SKILL.md)
+for configuring, running, monitoring and troubleshooting CIDenoise, with parameter
+and recovery references. It is scoped to the workflow; there is no measurement-data
+analysis skill.
