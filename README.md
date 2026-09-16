@@ -128,6 +128,15 @@ checkpoint inference, and `tools/verify_models.py` for upstream numerical compar
 (the latter needs the pinned `.cache/upstream` checkouts). Source provenance and
 licensing are documented in [THIRD_PARTY.md](THIRD_PARTY.md).
 
+The initial workstation validation passed 23 Windows contract tests and the Linux
+GitHub CI suite (the Windows rename test is skipped on Linux). All three checkpoints
+passed CPU and CUDA inference checks, plus CUDA checks in Docker with networking
+disabled. Adapted UniFMIR forward passes matched upstream exactly on the test patches;
+FluoResFM's SDPA path differed by at most `9.93e-5` in normalized units. A small image
+and HCS fixture produced pixel-identical local/container UniFMIR results. Direct OMERO
+and BIOMERO import probes passed for both fixture types, including first-plane pixel
+readback. These import checks do not establish Slurm workflow registration.
+
 See [docs/candidates.md](docs/candidates.md) for deferred denoising methods.
 
 The repository includes a [workflow skill](skills/use-cidenoise-workflow/SKILL.md)

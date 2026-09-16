@@ -155,13 +155,13 @@ def report(localdata, output, frozen, models):
             gallery(reportdir / filename, arrays, calibration)
             sections.append(f'<section><h2>{name}, channel {c+1}</h2><p>Alignment: {html.escape(str(align))}</p><div class="table"><table><tr><th>Model</th><th>Mean</th><th>Mean change</th><th>MAE to original LAS-X</th><th>MAE to scaled LAS-X</th><th>PSNR to scaled LAS-X</th><th>SSIM to scaled LAS-X</th><th>Adjacent-Z MAE</th><th>Clipped pixels</th></tr>{"".join(rows)}</table></div><a href="{filename}"><img src="{filename}" alt="Matched image comparison"></a></section>')
     (reportdir / "metrics.json").write_text(json.dumps(all_metrics, indent=2, allow_nan=False))
-    (reportdir / "index.html").write_text('''<!doctype html><meta charset="utf-8"><title>CIDenoise comparison</title>
+    (reportdir / "index.html").write_text('''<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CIDenoise comparison</title>
 <style>body{font:16px system-ui;background:#10151c;color:#e6edf3;margin:32px}a{color:#79c0ff}img{max-width:100%;height:auto}table{border-collapse:collapse;margin:16px 0}.table{overflow-x:auto}td,th{padding:8px 16px;border:1px solid #445}section{margin:48px 0}pre{white-space:pre-wrap}</style>
 <h1>CIDenoise / Leica LAS-X comparison</h1><p>LAS-X is a processed reference, not ground truth. No automatic winner is assigned. Brightness mapping and display ranges were fitted on brain1 and frozen before brain2. Panels share those ranges; XZ views are vertically stretched for inspection, not shown at physical aspect ratio. Residual gray midpoint means zero, with limits ±25% of the display range.</p>
 <p>Review weak puncta, fine processes, background texture, removed structures and introduced structures. Smoothness and similarity alone do not establish biological accuracy. Runtime and GPU memory in metrics.json are per complete store, not per channel.</p>
 <p>Adjacent-Z MAE measures intensity differences between neighboring planes; true anatomical differences also contribute. It is not a standalone measure of denoising quality. The JSON includes intensity percentiles (1, 50, 99, 99.9) and metric ranges are fixed by the calibration below.</p>
 <p><a href="metrics.json">All metrics and intensity distributions</a></p><h2>Performance</h2><p>Elapsed time includes image I/O and pyramid generation, excludes model loading. Peak memory is PyTorch-allocated GPU memory.</p>
-<table><tr><th>Image</th><th>Model</th><th>Minutes</th><th>Peak GPU GiB</th></tr>''' + "".join(performance) + "</table><h2>Frozen calibration and settings</h2><pre>" + html.escape(json.dumps(frozen,indent=2)) + "</pre>" + "".join(sections), encoding="utf-8")
+<table><tr><th>Image</th><th>Model</th><th>Minutes</th><th>Peak GPU GiB</th></tr>''' + "".join(performance) + "</table><details><summary>Frozen calibration and settings</summary><pre>" + html.escape(json.dumps(frozen,indent=2)) + "</pre></details>" + "".join(sections), encoding="utf-8")
     return reportdir / "index.html"
 
 
