@@ -1,7 +1,9 @@
 # CI Denoise
 
 Pretrained fluorescence denoising from OME-Zarr to OME-Zarr, for Bilayers/BIOMERO,
-local Windows CUDA and Linux containers. No training, Gradio or Jupyter dependencies.
+local Windows CUDA and Linux containers. The BIOMERO workflow performs pretrained
+inference only. Optional [local confocal Noise2Noise training](training/README.md)
+is available separately; no Gradio or Jupyter interface is required.
 
 ## Quick start on this workstation
 
