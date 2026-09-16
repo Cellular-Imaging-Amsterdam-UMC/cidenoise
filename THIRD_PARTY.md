@@ -11,12 +11,14 @@ weights are not committed to the source repository.
 | FluoResFM release archive | https://doi.org/10.5281/zenodo.18382702 | Zenodo archive: CC-BY-4.0; this is separate from the code's MIT license |
 | BiomedCLIP | microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224, supplied with the FluoResFM archive | MIT model terms; retain Microsoft attribution |
 | UniFMIR checkpoints | https://github.com/cxm12/UNiFMIR/releases/tag/2023.10.05 | Distributed with the GPL-3.0 project; retain upstream attribution |
+| Noise2Noise FMD architecture and published weights | ND-HowardGroup/Instant-Image-Denoising, `c885aee8adb62bcd2d5c3862273d4ea0f68b3068`; Varun Mannam, University of Notre Dame | GPL-3.0; see `cidenoise/vendor/instant/LICENSE`. Inference architecture ported from TensorFlow to PyTorch; published NumPy kernels transposed without training. |
+| Cellpose denoising CPnet and cyto3/nuclei weights | MouseLand/cellpose, `fb22843e70d03f7884c301b7b72bedd7d9c3d2d9` (3.1.1.1); Howard Hughes Medical Institute | BSD-3-Clause; see `cidenoise/vendor/cellpose/LICENSE`. Network source unchanged; only denoising checkpoints used. |
 
 The model manifest pins checksums, source revisions, download URLs and normalization.
 Its model `license` fields identify the model implementation's code license; archive
 and text-encoder terms above also apply when distributing model-cache images.
 
-Changes to vendored code are reproducible with `tools/vendor_sources.py`:
+Original FluoResFM/UniFMIR vendoring is reproducible with `tools/vendor_sources.py`:
 
 - FluoResFM: only the internal import path is changed. CIDenoise installs equivalent
   PyTorch scaled-dot-product attention at runtime; original attention remains available

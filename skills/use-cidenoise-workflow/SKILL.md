@@ -1,8 +1,8 @@
 ---
 name: use-cidenoise-workflow
-description: Configure, run, monitor, and troubleshoot the CIDenoise Bilayers/BIOMERO workflow for pretrained fluorescence denoising of OME-Zarr images or HCS plates with FluoResFM and UniFMIR.
+description: Configure, run, monitor, and troubleshoot the CIDenoise Bilayers/BIOMERO workflow for pretrained fluorescence denoising of OME-Zarr images or HCS plates with FluoResFM, UniFMIR, Noise2Noise and Cellpose.
 metadata:
-  version: "1"
+  version: "2"
 ---
 
 # Use CIDenoise Workflow

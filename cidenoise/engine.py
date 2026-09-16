@@ -1,5 +1,5 @@
 """Transactional image/HCS denoising, bounded to a few planes in RAM."""
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, replace
 from pathlib import Path
 import copy
 import json
@@ -24,13 +24,30 @@ class Settings:
     model: str = "fluoresfm"
     channels: str = "all"
     device: str = "auto"
-    tile_size: int = 64
-    overlap: int = 16
-    batch_size: int = 4
+    tile_size: int = 0
+    overlap: int = -1
+    batch_size: int = 0
     output_dtype: str = "source"
     structures: str = "{}"
+    precision: str = "auto"
+
+    def resolved(self):
+        tile, overlap, batch = (64,16,16) if self.model == "fluoresfm" else (64,16,4)
+        if self.model == "noise2noise-fmd":
+            tile, overlap, batch = 512,128,2
+        elif self.model.startswith("cellpose-"):
+            tile, overlap, batch = 224,64,8
+        return replace(self, tile_size=self.tile_size or tile,
+                       overlap=overlap if self.overlap == -1 else self.overlap,
+                       batch_size=self.batch_size or batch)
 
     def validate(self):
+        if self.tile_size == 0 or self.overlap == -1 or self.batch_size == 0:
+            return self.resolved().validate()
+        if self.precision not in ("auto", "float32", "float16"):
+            raise ValueError("Precision must be auto, float32 or float16")
+        if self.model == "noise2noise-fmd" and self.tile_size % 32:
+            raise ValueError("Noise2Noise tile size must be divisible by 32")
         if self.tile_size < 64 or self.tile_size % 8 or not 0 <= self.overlap < self.tile_size or self.batch_size < 1:
             raise ValueError("Tile size must be >=64 and divisible by 8; overlap must be smaller; batch size >=1")
         if self.output_dtype not in ("source", "float32"):
@@ -60,6 +77,7 @@ def publish_store(temp, destination):
 
 
 def run_store(source, outfolder, settings, adapter=None):
+    settings = settings.resolved()
     structures = settings.validate()
     source = Path(source).resolve()
     outfolder = Path(outfolder).resolve()
@@ -77,7 +95,7 @@ def run_store(source, outfolder, settings, adapter=None):
         raise ValueError("Symlinks inside input stores are not supported")
     if adapter is None:
         from .adapters import Adapter
-        adapter = Adapter(settings.model, settings.device)
+        adapter = Adapter(settings.model, settings.device, precision=settings.precision)
     adapter.load()
     import torch
     if adapter.device == "cuda":
@@ -118,6 +136,12 @@ def run_store(source, outfolder, settings, adapter=None):
                         if not np.isfinite(center).all():
                             raise ValueError("Input contains NaN or infinite intensities")
                         low, high, method = volume_bounds or plane_bounds(center)
+                        if settings.model == "noise2noise-fmd":
+                            maximum = max(float(center.max()), 0.0)
+                            low, high, method = maximum / 2, maximum * 1.5, "plane maximum; x/max - 0.5"
+                        elif settings.model.startswith("cellpose-"):
+                            low, high = map(float, np.percentile(center, [1,99]))
+                            method = "plane p1,p99"
                         scale = high - low
                         constant = float(center.min()) == float(center.max())
                         if constant and adapter.context == 1:

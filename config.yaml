@@ -60,6 +60,9 @@ parameters:
     description: Explicit checkpoint selection; no training or automatic model substitution.
     options:
       - {label: FluoResFM, value: fluoresfm}
+      - {label: Noise2Noise FMD (fast CNN), value: noise2noise-fmd}
+      - {label: Cellpose denoise cyto3, value: cellpose-cyto3}
+      - {label: Cellpose denoise nuclei, value: cellpose-nuclei}
       - {label: UniFMIR Planaria (single plane), value: unifmir-planaria}
       - {label: UniFMIR Tribolium (five Z planes), value: unifmir-tribolium}
     default: fluoresfm
@@ -79,9 +82,9 @@ parameters:
     optional: true
     section_id: essential
     mode: beginner
-  - {name: tile_size, type: integer, label: Tile size (pixels), description: 'Multiple of 8, at least 64.', default: 64, minimum: 64, maximum: 2048, cli_tag: --tile-size, cli_order: 20, optional: true, section_id: advanced, mode: advanced}
-  - {name: overlap, type: integer, label: Tile overlap (pixels), description: Must be smaller than tile size., default: 16, minimum: 0, maximum: 2047, cli_tag: --overlap, cli_order: 21, optional: true, section_id: advanced, mode: advanced}
-  - {name: batch_size, type: integer, label: Tile batch size, default: 4, minimum: 1, maximum: 128, cli_tag: --batch-size, cli_order: 22, optional: true, section_id: advanced, mode: advanced}
+  - {name: tile_size, type: integer, label: Tile size (pixels), description: '0 selects model preset; manual values must be at least 64 and divisible by 8 (32 for Noise2Noise).', default: 0, minimum: 0, maximum: 2048, cli_tag: --tile-size, cli_order: 20, optional: true, section_id: advanced, mode: advanced}
+  - {name: overlap, type: integer, label: Tile overlap (pixels), description: -1 selects model preset; otherwise smaller than tile size., default: -1, minimum: -1, maximum: 2047, cli_tag: --overlap, cli_order: 21, optional: true, section_id: advanced, mode: advanced}
+  - {name: batch_size, type: integer, label: Tile batch size (0 = preset), default: 0, minimum: 0, maximum: 128, cli_tag: --batch-size, cli_order: 22, optional: true, section_id: advanced, mode: advanced}
   - name: output_dtype
     type: dropdown
     label: Output data type
@@ -92,4 +95,284 @@ parameters:
     optional: true
     section_id: advanced
     mode: advanced
-  - {name: structures, type: string, label: Channel structures (JSON), description: 'Optional FluoResFM descriptions, e.g. {"1":"nuclei"}. Empty means task-only.', default: '{}', cli_tag: --structures, cli_order: 24, optional: true, section_id: advanced, mode: advanced}
+  - {name: precision, type: dropdown, label: Inference precision, options: [{label: Automatic (FP16 FluoResFM CUDA), value: auto}, {label: Float32 reference, value: float32}, {label: Float16 CUDA, value: float16}], default: auto, cli_tag: --precision, cli_order: 24, optional: true, section_id: advanced, mode: advanced}
+  - name: structure_1
+    type: dropdown
+    label: Channel 1 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-1
+    cli_order: 31
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_2
+    type: dropdown
+    label: Channel 2 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-2
+    cli_order: 32
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_3
+    type: dropdown
+    label: Channel 3 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-3
+    cli_order: 33
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_4
+    type: dropdown
+    label: Channel 4 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-4
+    cli_order: 34
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_5
+    type: dropdown
+    label: Channel 5 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-5
+    cli_order: 35
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_6
+    type: dropdown
+    label: Channel 6 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-6
+    cli_order: 36
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_7
+    type: dropdown
+    label: Channel 7 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-7
+    cli_order: 37
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - name: structure_8
+    type: dropdown
+    label: Channel 8 structure
+    description: Optional biological description; task-only adds no structure prompt.
+    options:
+    - label: Task only / unspecified
+      value: task-only
+    - label: Nuclei
+      value: nuclei
+    - label: Neuronal processes
+      value: neuronal processes
+    - label: Actin filaments
+      value: actin filaments
+    - label: Microtubules
+      value: microtubules
+    - label: Cell membranes
+      value: cell membranes
+    - label: Mitochondria
+      value: mitochondria
+    - label: Endoplasmic reticulum
+      value: endoplasmic reticulum
+    - label: Golgi apparatus
+      value: Golgi apparatus
+    - label: Lysosomes
+      value: lysosomes
+    - label: Vesicles
+      value: vesicles
+    - label: Puncta
+      value: puncta
+    default: task-only
+    cli_tag: --structure-8
+    cli_order: 38
+    optional: true
+    section_id: advanced
+    mode: advanced

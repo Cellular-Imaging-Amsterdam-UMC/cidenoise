@@ -11,7 +11,7 @@ Open this folder in VS Code and run `launch.cmd` for the PyQt launcher.
 It exposes **Run Locally**, **Run Docker**, settings files and a live execution log.
 
 For a new installation, run `create_env.cmd`. It installs the pinned requirements,
-downloads verified pretrained assets and tests all three checkpoints on CUDA.
+downloads verified pretrained assets and tests all six checkpoints on CUDA.
 `requirements-lock-windows.txt` records and constrains the tested transitive versions.
 The setup download includes a roughly 4.3 GB FluoResFM release archive; extracted
 runtime assets occupy roughly 3.6 GB. Downloading is separate from inference.
@@ -30,6 +30,8 @@ and explicitly pairs raw/reference stores in `localdata`.
 | ID | Input context | Normalization |
 |---|---|---|
 | `fluoresfm` (default) | One XY plane from one channel | Per-plane 3rd/99.5th percentiles, nonnegative input, task-only prompt by default |
+| `noise2noise-fmd` | One XY plane; fast microscopy CNN | Per-plane maximum; input x/max - 0.5, inverse (y+0.5)*max |
+| `cellpose-cyto3` / `cellpose-nuclei` | One XY plane; segmentation-oriented denoising | Per-plane 1st/99th percentiles; native pixel scale |
 | `unifmir-planaria` | One XY plane from one channel | Per-channel Z-stack 2nd/99.8th percentiles |
 | `unifmir-tribolium` | Five neighboring Z planes from one channel | Same stack normalization; reflected Z boundaries |
 
@@ -37,10 +39,27 @@ These are pretrained models from other specimen domains. Their names describe tr
 data, not detected specimen classes. No model is silently substituted on failure.
 
 Basic parameters are `--model`, `--channels all` (or one-based `1,3`), and
-`--device auto|cuda|cpu`. Advanced parameters are `--tile-size 64`, `--overlap 16`,
-`--batch-size 4`, `--output-dtype source|float32`, and `--structures` (a JSON mapping
-such as `{"1":"nuclei","4":"neuronal processes"}`). Structures affect FluoResFM only.
-The task is always denoising at scale 1. Runtime is float32 without model compilation.
+`--device auto|cuda|cpu`. The launcher has eight channel structure menus;
+`--structure-1 nuclei` through `--structure-8` provide the same choices in the CLI.
+Task-only is the default. Legacy `--structures` JSON remains available in the CLI.
+Descriptions affect FluoResFM only and are never inferred from channel colors.
+
+Advanced defaults `--tile-size 0 --overlap -1 --batch-size 0` resolve to model-specific
+presets for a 12 GB GPU / 16 GB RAM workstation. Explicit values override presets.
+`--precision auto` uses FP16 for FluoResFM on CUDA and FP32 otherwise; use
+`--precision float32` for the reference path. Output dtype remains source by default.
+Compilation remains disabled. See [performance and presets](docs/performance.md).
+
+For quick comparisons, run `python tools/make_benchmark_crops.py` once, then:
+
+```powershell
+python -m cidenoise.benchmark --localdata outputs/benchmark-small-inputs --output outputs/benchmark-small-fast
+```
+
+The four matched crop stores contain all channels: brain1 is 4x6x256x256 and brain2
+4x4x256x256, each with its LAS-X reference. Raw inputs alone are denoised by this
+benchmark. Spatial coordinates and source pixels are preserved; these are standalone
+single-resolution NGFF stores. Their report is `outputs/benchmark-small-fast/report/index.html`.
 
 Model assets and tokenizer files are verified and loaded from `models/`, or from
 `CIDENOISE_MODELS`. Missing/corrupt assets fail with an actionable error. Runtime sets

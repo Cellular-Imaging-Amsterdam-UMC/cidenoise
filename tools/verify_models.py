@@ -13,7 +13,7 @@ from cidenoise.adapters import Adapter, MODEL_IDS
 
 def main():
     results = []
-    for identifier in MODEL_IDS:
+    for identifier in ("fluoresfm", "unifmir-planaria", "unifmir-tribolium"):
         adapter = Adapter(identifier, "cuda")
         adapter.load()
         adapter.set_structure()

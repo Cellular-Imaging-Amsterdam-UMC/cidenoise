@@ -21,6 +21,27 @@
       "normalization": "per-channel stack p2,p99.8; five Z planes",
       "upstream_revision": "dc90f055db7434078ef68b8c1a1fba97af6dbbc0",
       "license": "GPL-3.0"
+    },
+    "noise2noise-fmd": {
+      "checkpoint": "instant/model_multiple_gpus_unet_nbn_lr3.h5",
+      "sha256": "49f7bb4abf235c9f93eae6bdec256c41a49ad9e0cad9743ab9a57900afb0ab40",
+      "upstream_revision": "c885aee8adb62bcd2d5c3862273d4ea0f68b3068",
+      "license": "GPL-3.0",
+      "normalization": "per-plane maximum; x/max - 0.5; reverse (y + 0.5)*max"
+    },
+    "cellpose-cyto3": {
+      "checkpoint": "cellpose/denoise_cyto3",
+      "sha256": "2d78729118f7ab0a4463c948c0ef305c1e5a5e7dade9cba5b3ef828348ee676e",
+      "upstream_revision": "fb22843e70d03f7884c301b7b72bedd7d9c3d2d9",
+      "license": "BSD-3-Clause",
+      "normalization": "per-plane p1,p99; scale 1 (native pixel sampling); no normalized clipping"
+    },
+    "cellpose-nuclei": {
+      "checkpoint": "cellpose/denoise_nuclei",
+      "sha256": "da6dacca6c44367cb9180e4251f7f25273559e7dfb68884a608b62b9cca41d0e",
+      "upstream_revision": "fb22843e70d03f7884c301b7b72bedd7d9c3d2d9",
+      "license": "BSD-3-Clause",
+      "normalization": "per-plane p1,p99; scale 1 (native pixel sampling); no normalized clipping"
     }
   },
   "assets": [
@@ -68,6 +89,21 @@
       "path": "biomedclip/bert/vocab.txt",
       "sha256": "7b36651908a88bc38bda41b728b2a598191e0d3b553cbacf7b1e5f026d5b5b9f",
       "url": "https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract/resolve/d673b8835373c6fa116d6d8006b33d48734e305d/vocab.txt"
+    },
+    {
+      "path": "instant/model_multiple_gpus_unet_nbn_lr3.h5",
+      "url": "https://raw.githubusercontent.com/ND-HowardGroup/Instant-Image-Denoising/c885aee8adb62bcd2d5c3862273d4ea0f68b3068/Plugins/Image_Denoising_Plugins_Journal/best_results_with_configurations/Noise2Noise_NBN/model_multiple_gpus_unet_nbn_lr3.h5",
+      "sha256": "49f7bb4abf235c9f93eae6bdec256c41a49ad9e0cad9743ab9a57900afb0ab40"
+    },
+    {
+      "path": "cellpose/denoise_cyto3",
+      "url": "https://www.cellpose.org/models/denoise_cyto3",
+      "sha256": "2d78729118f7ab0a4463c948c0ef305c1e5a5e7dade9cba5b3ef828348ee676e"
+    },
+    {
+      "path": "cellpose/denoise_nuclei",
+      "url": "https://www.cellpose.org/models/denoise_nuclei",
+      "sha256": "da6dacca6c44367cb9180e4251f7f25273559e7dfb68884a608b62b9cca41d0e"
     }
   ],
   "text_encoder": {

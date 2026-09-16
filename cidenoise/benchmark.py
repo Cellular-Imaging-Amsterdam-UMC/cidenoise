@@ -124,7 +124,7 @@ def report(localdata, output, frozen, models):
             if not store.exists():
                 raise FileNotFoundError(f"Missing benchmark output {store}; run inference first")
             root, images = open_images(store)
-            expected = dict(frozen["settings"], model=model)
+            expected = asdict(Settings(**dict(frozen["settings"], model=model)).resolved())
             if root.attrs["cidenoise"]["settings"] != expected:
                 raise ValueError(f"Output settings differ from frozen settings: {store}")
             model_images[model] = (images[0], root.attrs["cidenoise"])
@@ -173,12 +173,13 @@ def main(argv=None):
     p.add_argument("--models", nargs="+", choices=MODEL_IDS, default=list(MODEL_IDS))
     p.add_argument("--phase", choices=("all", "infer", "report"), default="all")
     p.add_argument("--device", default="cuda", choices=("auto", "cpu", "cuda"))
-    p.add_argument("--tile-size", type=int, default=64)
-    p.add_argument("--overlap", type=int, default=16)
-    p.add_argument("--batch-size", type=int, default=4)
+    p.add_argument("--tile-size", type=int, default=0)
+    p.add_argument("--overlap", type=int, default=-1)
+    p.add_argument("--batch-size", type=int, default=0)
+    p.add_argument("--precision", choices=("auto", "float32", "float16"), default="auto")
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
-    settings = Settings(device=args.device, tile_size=args.tile_size, overlap=args.overlap, batch_size=args.batch_size)
+    settings = Settings(device=args.device, tile_size=args.tile_size, overlap=args.overlap, batch_size=args.batch_size, precision=args.precision)
     settings.validate()
     args.output.mkdir(parents=True, exist_ok=True)
     frozen_path = args.output / "frozen.json"
@@ -189,13 +190,13 @@ def main(argv=None):
         import torch
         for model in args.models:
             settings.model = model
-            adapter = Adapter(model, args.device)
+            adapter = Adapter(model, args.device, precision=settings.precision)
             for name in ("brain1", "brain2"):
                 source = args.localdata / f"{name}.ome.zarr"
                 destination = args.output / model / output_name(source)
                 if destination.exists():
                     root = open_images(destination)[0]
-                    if root.attrs["cidenoise"]["settings"] != asdict(settings):
+                    if root.attrs["cidenoise"]["settings"] != asdict(settings.resolved()):
                         raise ValueError(f"Existing benchmark settings mismatch: {destination}")
                     logging.info("Reusing completed output %s", destination)
                     continue

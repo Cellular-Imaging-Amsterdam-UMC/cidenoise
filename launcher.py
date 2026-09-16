@@ -399,10 +399,16 @@ class Window(QMainWindow):
         self.input_path.setText(data.get('input', ''))
         self.output_path.setText(data.get('output', ''))
         self.gpu.setChecked(data.get('gpu', True))
-        restored_values = data.get('values', {})
+        restored_values = dict(data.get('values', {}))
+        # Preserve descriptions from launcher settings saved before the eight menus.
+        legacy = json.loads(restored_values.get('structures', '{}'))
+        for channel, description in legacy.items():
+            restored_values.setdefault(f'structure_{channel}', description or 'task-only')
         for name, value in restored_values.items():
             widget = self.widgets.get(name)
             if isinstance(widget, QComboBox):
+                if name.startswith('structure_') and widget.findData(value) < 0:
+                    widget.addItem(str(value), value)
                 widget.setCurrentIndex(max(0, widget.findData(value)))
             elif isinstance(widget, QCheckBox):
                 widget.setChecked(bool(value))
