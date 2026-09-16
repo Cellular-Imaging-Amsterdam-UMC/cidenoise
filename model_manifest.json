@@ -1,0 +1,92 @@
+{
+  "format_version": 1,
+  "models": {
+    "fluoresfm": {
+      "checkpoint": "fluoresfm/epoch_0_iter_700000.pt",
+      "sha256": "d2402bff6e52fce05e5442e96eb0a9a39623adc932c73b46ddd8998d2f452db3",
+      "normalization": "per-plane p3,p99.5; nonnegative input; no normalized clipping",
+      "upstream_revision": "2fded7c31be8c52476de89934ced9093ebe2c307",
+      "license": "MIT"
+    },
+    "unifmir-planaria": {
+      "checkpoint": "unifmir/planaria.pt",
+      "sha256": "e70e040d00b5f4d0e8a9e6863fa1293544df01002996e579d2d76a1be31a8cc6",
+      "normalization": "per-channel stack p2,p99.8; no normalized clipping",
+      "upstream_revision": "dc90f055db7434078ef68b8c1a1fba97af6dbbc0",
+      "license": "GPL-3.0"
+    },
+    "unifmir-tribolium": {
+      "checkpoint": "unifmir/tribolium.pt",
+      "sha256": "3178ada138fd3f338f195c06ef88ecf320c2e1c9abeb7c83f7ab4ba07bac4fe1",
+      "normalization": "per-channel stack p2,p99.8; five Z planes",
+      "upstream_revision": "dc90f055db7434078ef68b8c1a1fba97af6dbbc0",
+      "license": "GPL-3.0"
+    }
+  },
+  "assets": [
+    {
+      "path": "fluoresfm/epoch_0_iter_700000.pt",
+      "sha256": "d2402bff6e52fce05e5442e96eb0a9a39623adc932c73b46ddd8998d2f452db3",
+      "archive": "fluoresfm",
+      "member": "example/checkpoints/fluoresfm/epoch_0_iter_700000.pt"
+    },
+    {
+      "path": "biomedclip/open_clip_config.json",
+      "sha256": "9a41f334a8c444678772c0ebb9ab854c97ab350bced3a17b803e258d39c23dc0",
+      "archive": "fluoresfm",
+      "member": "example/checkpoints/biomedclip/open_clip_config.json"
+    },
+    {
+      "path": "biomedclip/open_clip_pytorch_model.bin",
+      "sha256": "52cc993c5c5ff962bd0c60931874bc001e7e9b41666a385530f4a036294576be",
+      "archive": "fluoresfm",
+      "member": "example/checkpoints/biomedclip/open_clip_pytorch_model.bin"
+    },
+    {
+      "path": "unifmir/planaria.pt",
+      "sha256": "e70e040d00b5f4d0e8a9e6863fa1293544df01002996e579d2d76a1be31a8cc6",
+      "archive": "unifmir",
+      "member": "experiment/SwinIRDenoising_Planaria/model_best15.pt"
+    },
+    {
+      "path": "unifmir/tribolium.pt",
+      "sha256": "3178ada138fd3f338f195c06ef88ecf320c2e1c9abeb7c83f7ab4ba07bac4fe1",
+      "archive": "unifmir",
+      "member": "experiment/SwinIRmto1Denoising_Tribolium/model_best.pt"
+    },
+    {
+      "path": "biomedclip/bert/config.json",
+      "sha256": "56bab767c02bc792897638feb8addc06d483d9c73769a5f554bbabea1f5507a1",
+      "url": "https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract/resolve/d673b8835373c6fa116d6d8006b33d48734e305d/config.json"
+    },
+    {
+      "path": "biomedclip/bert/tokenizer_config.json",
+      "sha256": "53b6f42b8b8daddbdc6d3532c324187a92b46c1602bd6e8d4ad5a413b4fc90e1",
+      "url": "https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract/resolve/d673b8835373c6fa116d6d8006b33d48734e305d/tokenizer_config.json"
+    },
+    {
+      "path": "biomedclip/bert/vocab.txt",
+      "sha256": "7b36651908a88bc38bda41b728b2a598191e0d3b553cbacf7b1e5f026d5b5b9f",
+      "url": "https://huggingface.co/microsoft/BiomedNLP-BiomedBERT-base-uncased-abstract/resolve/d673b8835373c6fa116d6d8006b33d48734e305d/vocab.txt"
+    }
+  ],
+  "text_encoder": {
+    "model": "BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+    "license": "MIT",
+    "tokenizer_revision": "d673b8835373c6fa116d6d8006b33d48734e305d"
+  },
+  "archives": {
+    "fluoresfm": {
+      "filename": "fluoresfm-example.zip",
+      "url": "https://zenodo.org/api/records/18382702/files/example.zip/content",
+      "checksum": "98ca344be1834714ab72606d9228f9dd",
+      "algorithm": "md5"
+    },
+    "unifmir": {
+      "filename": "model.tgz",
+      "url": "https://github.com/cxm12/UNiFMIR/releases/download/2023.10.05/model.tgz",
+      "checksum": "d73af08d1d9205498a899a972c04321004db4785b3fa506fdd856c3ae319db10",
+      "algorithm": "sha256"
+    }
+  }
+}

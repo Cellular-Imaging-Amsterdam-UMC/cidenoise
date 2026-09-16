@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cidenoise"
+version = "0.1.0"
+description = "Pretrained fluorescence microscopy denoising for Bilayers and BIOMERO"
+requires-python = ">=3.11"
+license = "GPL-3.0-only"
+
+[tool.setuptools.packages.find]
+include = ["cidenoise*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

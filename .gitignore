@@ -1,0 +1,11 @@
+localdata/
+models/
+.cache/
+outputs/
+outputfolder/
+inputfolder/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.last_launcher_settings.json
+.docker-build-state.json

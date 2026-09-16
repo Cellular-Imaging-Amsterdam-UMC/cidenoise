@@ -1,0 +1,95 @@
+citations:
+  - {name: FluoResFM, doi: 'https://doi.org/10.1038/s41467-026-70307-4', license: MIT, description: Pretrained fluorescence image restoration}
+  - {name: UniFMIR, doi: 'https://doi.org/10.1038/s41592-024-02244-3', license: GPL-3.0, description: Pretrained microscopy restoration}
+docker_image:
+  org: cellularimagingcf
+  name: w_cidenoise
+  tag: v0.1.0
+  platform: linux/amd64
+algorithm_folder_name: cidenoise_inference
+exec_function:
+  name: generate_cli_command
+  cli_command: python wrapper.py
+  hidden_args:
+    - {cli_tag: --local, value: 'true', append_value: false, cli_order: 3}
+inputs:
+  - name: infolder
+    type: image
+    label: Input OME-Zarrs
+    description: Folder of NGFF 0.4 Zarr v2 images or HCS plates.
+    cli_tag: --infolder
+    cli_order: 1
+    default: directory
+    optional: false
+    format: [zarr]
+    unique_string: [.ome.zarr]
+    folder_name: /data/in
+    file_count: multiple
+    section_id: inputs
+    mode: beginner
+    subtype: [grayscale, color]
+    depth: true
+    timepoints: true
+    tiled: true
+    pyramidal: true
+outputs:
+  - name: outfolder
+    type: image
+    label: Denoised OME-Zarrs
+    description: New intensity stores preserving channel layout and spatial metadata.
+    cli_tag: --outfolder
+    cli_order: 2
+    default: directory
+    optional: false
+    format: [zarr]
+    unique_string: [.ome.zarr]
+    folder_name: /data/out
+    file_count: multiple
+    section_id: outputs
+    mode: beginner
+    subtype: [grayscale, color]
+    depth: true
+    timepoints: true
+    tiled: true
+    pyramidal: true
+display_only: []
+parameters:
+  - name: model
+    type: dropdown
+    label: Pretrained model
+    description: Explicit checkpoint selection; no training or automatic model substitution.
+    options:
+      - {label: FluoResFM, value: fluoresfm}
+      - {label: UniFMIR Planaria (single plane), value: unifmir-planaria}
+      - {label: UniFMIR Tribolium (five Z planes), value: unifmir-tribolium}
+    default: fluoresfm
+    cli_tag: --model
+    cli_order: 10
+    optional: true
+    section_id: essential
+    mode: beginner
+  - {name: channels, type: string, label: Channels, description: 'all or one-based numbers such as 1,3', default: all, cli_tag: --channels, cli_order: 11, optional: true, section_id: essential, mode: beginner}
+  - name: device
+    type: dropdown
+    label: Compute device
+    options: [{label: Automatic, value: auto}, {label: NVIDIA CUDA, value: cuda}, {label: CPU, value: cpu}]
+    default: auto
+    cli_tag: --device
+    cli_order: 12
+    optional: true
+    section_id: essential
+    mode: beginner
+  - {name: tile_size, type: integer, label: Tile size (pixels), description: 'Multiple of 8, at least 64.', default: 64, minimum: 64, maximum: 2048, cli_tag: --tile-size, cli_order: 20, optional: true, section_id: advanced, mode: advanced}
+  - {name: overlap, type: integer, label: Tile overlap (pixels), description: Must be smaller than tile size., default: 16, minimum: 0, maximum: 2047, cli_tag: --overlap, cli_order: 21, optional: true, section_id: advanced, mode: advanced}
+  - {name: batch_size, type: integer, label: Tile batch size, default: 4, minimum: 1, maximum: 128, cli_tag: --batch-size, cli_order: 22, optional: true, section_id: advanced, mode: advanced}
+  - name: output_dtype
+    type: dropdown
+    label: Output data type
+    options: [{label: Preserve source dtype, value: source}, {label: Float32, value: float32}]
+    default: source
+    cli_tag: --output-dtype
+    cli_order: 23
+    optional: true
+    section_id: advanced
+    mode: advanced
+  - {name: structures, type: string, label: Channel structures (JSON), description: 'Optional FluoResFM descriptions, e.g. {"1":"nuclei"}. Empty means task-only.', default: '{}', cli_tag: --structures, cli_order: 24, optional: true, section_id: advanced, mode: advanced}

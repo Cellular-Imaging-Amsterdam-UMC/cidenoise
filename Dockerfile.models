@@ -1,0 +1,3 @@
+FROM python:3.11-slim
+COPY models/ /opt/cidenoise-models/
+ENV CIDENOISE_MODELS=/opt/cidenoise-models

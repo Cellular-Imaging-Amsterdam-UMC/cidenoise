@@ -1,0 +1,7 @@
+ARG MODEL_CACHE_IMAGE=w_cidenoise-model-cache:latest
+FROM ${MODEL_CACHE_IMAGE}
+ENV PYTHONUNBUFFERED=1 PIP_NO_CACHE_DIR=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
+COPY requirements.txt /tmp/requirements.txt
+COPY requirements-lock-linux.txt /tmp/requirements-lock-linux.txt
+RUN pip install -r /tmp/requirements.txt -c /tmp/requirements-lock-linux.txt && mkdir -p /data/in /data/out
+WORKDIR /app

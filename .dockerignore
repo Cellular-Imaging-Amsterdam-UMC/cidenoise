@@ -1,0 +1,17 @@
+**
+!cidenoise/**
+!cidenoise/
+!wrapper.py
+!bilayers_cli.py
+!config.yaml
+!model_manifest.json
+!version.txt
+!tools/
+!tools/cuda_smoke.py
+!requirements.txt
+!requirements-lock-linux.txt
+!Dockerfile*
+!LICENSE
+!THIRD_PARTY.md
+!README.md
+**/__pycache__/**
