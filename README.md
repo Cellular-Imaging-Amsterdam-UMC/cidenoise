@@ -33,6 +33,7 @@ and explicitly pairs raw/reference stores in `localdata`.
 |---|---|---|
 | `fluoresfm` (default) | One XY plane from one channel | Per-plane 3rd/99.5th percentiles, nonnegative input, task-only prompt by default |
 | `noise2noise-fmd` | One XY plane; fast microscopy CNN | Per-plane maximum; input x/max - 0.5, inverse (y+0.5)*max |
+| `noise2noise-confocal` | Experimental; five FMD confocal categories; epoch 75; background bias observed on brain crops | Fixed x/255 - 0.5 (uint8); x/65535 - 0.5 (uint16 adaptation); float input must be [0,1] |
 | `cellpose-cyto3` / `cellpose-nuclei` | One XY plane; segmentation-oriented denoising | Per-plane 1st/99th percentiles; native pixel scale |
 | `unifmir-planaria` | One XY plane from one channel | Per-channel Z-stack 2nd/99.8th percentiles |
 | `unifmir-tribolium` | Five neighboring Z planes from one channel | Same stack normalization; reflected Z boundaries |

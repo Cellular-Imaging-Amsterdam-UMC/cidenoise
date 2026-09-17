@@ -10,6 +10,7 @@ from cidenoise.vendor.instant import ArrayUnpickler
 def test_resource_presets_and_manual_override():
     assert (Settings().resolved().tile_size, Settings().resolved().batch_size) == (64,16)
     assert Settings(model="noise2noise-fmd").resolved().tile_size == 512
+    assert Settings(model="noise2noise-confocal").resolved().tile_size == 512
     assert Settings(model="cellpose-cyto3").resolved().tile_size == 224
     assert Settings(batch_size=2).resolved().batch_size == 2
     with pytest.raises(ValueError):
@@ -25,7 +26,7 @@ def test_eight_channel_menus_and_cli_agree(monkeypatch):
     config=launcher.load_config()
     menus=[p for p in config["parameters"] if p["name"].startswith("structure_")]
     assert len(menus)==8 and all(p["type"]=="dropdown" for p in menus)
-    values={"structure_1":"nuclei","structure_8":"neuronal processes","model":"noise2noise-fmd"}
+    values={"structure_1":"nuclei","structure_8":"neuronal processes","model":"noise2noise-confocal"}
     local=launcher.build_local_command(config,values,"/data/in","/data/out","python")
     generated=shlex.split(bilayers_cli.generate_cli_command(config,dict(values,infolder="/data/in",outfolder="/data/out")))
     a,b=parser().parse_args(local[2:]),parser().parse_args(generated[2:])

@@ -38,6 +38,14 @@ validation uses a separately installed site metadata probe and the active deploy
 
 ## Reference workflow MIT notice
 
+The local `noise2noise-confocal` checkpoint was trained from random initialization
+using the GPL-3.0 Noise2Noise architecture port and only the five confocal categories
+of the FMD dataset (Zhang et al., DOI 10.7274/r0-ed2r-4052, CC BY-SA 4.0).
+The data source and license are recorded in `training/confocal_sources.json`.
+Local trained weights are not distributed in this repository and have no public
+download URL; the model manifest pins their identity and training provenance.
+
+
 MIT License
 
 Copyright (c) 2026 Cellular Imaging, Amsterdam UMC

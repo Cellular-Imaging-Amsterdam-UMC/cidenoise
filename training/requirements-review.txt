@@ -1,0 +1,2 @@
+# Optional plotting dependencies for tools/assess_confocal_training.py
+matplotlib==3.11.2

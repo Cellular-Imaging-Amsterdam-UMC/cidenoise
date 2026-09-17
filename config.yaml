@@ -61,6 +61,7 @@ parameters:
     options:
       - {label: FluoResFM, value: fluoresfm}
       - {label: Noise2Noise FMD (fast CNN), value: noise2noise-fmd}
+      - {label: Noise2Noise confocal only (experimental), value: noise2noise-confocal}
       - {label: Cellpose denoise cyto3, value: cellpose-cyto3}
       - {label: Cellpose denoise nuclei, value: cellpose-nuclei}
       - {label: UniFMIR Planaria (single plane), value: unifmir-planaria}

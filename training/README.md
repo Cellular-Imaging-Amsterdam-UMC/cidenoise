@@ -1,5 +1,48 @@
 # Confocal-only Noise2Noise training
 
+## Installed confocal checkpoint (2026-09-17)
+
+The completed 100-epoch run selected epoch **75** (`best.pt`), validation noisy-target
+MSE **0.0009274739**. Mean validation MSE was 0.0009282375 at epochs 81–90 and
+0.0009282186 at epochs 91–100 (0.00203% improvement): the current schedule plateaued.
+This supports using the best checkpoint without extending this run; it does not
+prove an optimal architecture, schedule or performance on other specimens.
+
+Select **Noise2Noise confocal only (experimental)** in the launcher, or pass
+`--model noise2noise-confocal` to `wrapper.py`. The published mixed-modality FMD model
+remains a separate choice. Resource defaults: tile 512, overlap 128, batch 2, FP32.
+
+The local installation copies the original checkpoint unchanged to
+`models/confocal/best.pt`. SHA256:
+`a0c009dc9e5b863ee8a506b784e277901808e5aa84ccbe607701cff575dfd5c8`.
+On another machine, copy that exact file into the model cache at `confocal/best.pt`
+(or the corresponding path under `CIDENOISE_MODELS`). Weights are not in Git and
+have no public download URL. Model-cache Docker builds include the file when present;
+existing containers need rebuilding before this choice is available in Docker.
+
+Training used fixed uint8/255 scaling, retained exactly for uint8 inference.
+Uint16 uses its full 65535 range, and float data must already be in [0,1].
+Unsigned 12-bit acquisition stored in uint16 is therefore **not** automatically
+rescaled to its acquisition range. Such intensity/noise differences from the training
+data need review; no per-plane maximum normalization is silently introduced.
+Output conversion reverses scaling but does not enforce intensity conservation.
+
+**Brain-data limitation:** the small brain1/brain2 review found a strong positive
+background/intensity bias with full-range uint16 scaling: channel mean increases
+of approximately 152–156 raw intensity units. The checkpoint is available for
+experimentation but is not recommended for quantitative brain analysis in this
+configuration. More epochs of the same schedule are not supported by the plateau;
+acquisition-range/noise-domain adaptation needs a separate evaluation.
+On the fixed 256 held-out FMD patches, noisy-target MSE was 0.001594864 versus
+0.002783081 for raw pairs. These are noisy-reference metrics, not clean ground truth.
+
+Reproduce convergence assessment and a fixed held-out FOV19 test using
+`pip install -r training/requirements-review.txt` then
+`python tools/assess_confocal_training.py`. Local outputs are under
+`outputs/confocal-training-review/`; small brain comparisons are under
+`outputs/benchmark-confocal/report/`. No test or brain image was used to select
+the epoch-75 checkpoint.
+
 This optional local trainer is separate from the pretrained BIOMERO inference job.
 It uses the existing `cidenoise` Conda environment, Windows CUDA and the small
 Noise2Noise U-Net already ported into this repository. No TensorFlow, notebook or

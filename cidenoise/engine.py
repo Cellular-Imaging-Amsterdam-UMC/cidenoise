@@ -13,7 +13,7 @@ import zarr
 from skimage.transform import resize_local_mean
 from . import __version__
 from .ome_zarr import open_images, channels, cast_output, update_float_xml
-from .normalization import plane_bounds, stack_bounds
+from .normalization import plane_bounds, stack_bounds, confocal_bounds
 from .tiling import predict_plane, reflected_index
 
 log = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class Settings:
 
     def resolved(self):
         tile, overlap, batch = (64,16,16) if self.model == "fluoresfm" else (64,16,4)
-        if self.model == "noise2noise-fmd":
+        if self.model.startswith("noise2noise-"):
             tile, overlap, batch = 512,128,2
         elif self.model.startswith("cellpose-"):
             tile, overlap, batch = 224,64,8
@@ -46,7 +46,7 @@ class Settings:
             return self.resolved().validate()
         if self.precision not in ("auto", "float32", "float16"):
             raise ValueError("Precision must be auto, float32 or float16")
-        if self.model == "noise2noise-fmd" and self.tile_size % 32:
+        if self.model.startswith("noise2noise-") and self.tile_size % 32:
             raise ValueError("Noise2Noise tile size must be divisible by 32")
         if self.tile_size < 64 or self.tile_size % 8 or not 0 <= self.overlap < self.tile_size or self.batch_size < 1:
             raise ValueError("Tile size must be >=64 and divisible by 8; overlap must be smaller; batch size >=1")
@@ -136,7 +136,9 @@ def run_store(source, outfolder, settings, adapter=None):
                         if not np.isfinite(center).all():
                             raise ValueError("Input contains NaN or infinite intensities")
                         low, high, method = volume_bounds or plane_bounds(center)
-                        if settings.model == "noise2noise-fmd":
+                        if settings.model == "noise2noise-confocal":
+                            low, high, method = confocal_bounds(center, image.array.dtype)
+                        elif settings.model == "noise2noise-fmd":
                             maximum = max(float(center.max()), 0.0)
                             low, high, method = maximum / 2, maximum * 1.5, "plane maximum; x/max - 0.5"
                         elif settings.model.startswith("cellpose-"):
