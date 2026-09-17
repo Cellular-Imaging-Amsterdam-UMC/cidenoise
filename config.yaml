@@ -35,14 +35,14 @@ inputs:
 outputs:
   - name: outfolder
     type: image
-    label: Denoised OME-Zarrs
-    description: New intensity stores preserving channel layout and spatial metadata.
+    label: Denoised images or benchmark PNGs
+    description: New OME-Zarr stores; benchmark mode writes colour-overlay PNGs only.
     cli_tag: --outfolder
     cli_order: 2
     default: directory
     optional: false
-    format: [zarr]
-    unique_string: [.ome.zarr]
+    format: [zarr, png]
+    unique_string: [.ome.zarr, .png]
     folder_name: /data/out
     file_count: multiple
     section_id: outputs
@@ -54,6 +54,7 @@ outputs:
     pyramidal: true
 display_only: []
 parameters:
+  - {name: benchmark, type: checkbox, label: Visual benchmark (all models), description: "PNG overlays of all channels on the middle Z-plane and centre 512x512 crop. Ignores model/channel selection; no OME-Zarr output.", default: false, cli_tag: --benchmark, cli_order: 9, optional: true, section_id: essential, mode: beginner}
   - name: model
     type: dropdown
     label: Pretrained model
@@ -61,7 +62,6 @@ parameters:
     options:
       - {label: FluoResFM, value: fluoresfm}
       - {label: Noise2Noise FMD (fast CNN), value: noise2noise-fmd}
-      - {label: Noise2Noise confocal only (experimental), value: noise2noise-confocal}
       - {label: Cellpose denoise cyto3, value: cellpose-cyto3}
       - {label: Cellpose denoise nuclei, value: cellpose-nuclei}
       - {label: UniFMIR Planaria (single plane), value: unifmir-planaria}

@@ -52,8 +52,6 @@ def main():
     try:
         for asset in missing:
             target = args.models_dir / asset["path"]
-            if asset.get("local_only"):
-                raise FileNotFoundError(f"Local trained checkpoint required at {target}; copy pinned best.pt as documented in training/README.md. No public download is available.")
             if "url" in asset:
                 fetch(asset["url"], target, asset["sha256"])
             else:

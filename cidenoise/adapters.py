@@ -6,7 +6,7 @@ from pathlib import Path
 import time
 import numpy as np
 
-MODEL_IDS = ("fluoresfm", "unifmir-planaria", "unifmir-tribolium", "noise2noise-fmd", "noise2noise-confocal", "cellpose-cyto3", "cellpose-nuclei")
+MODEL_IDS = ("fluoresfm", "unifmir-planaria", "unifmir-tribolium", "noise2noise-fmd", "cellpose-cyto3", "cellpose-nuclei")
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -59,8 +59,6 @@ class Adapter:
         entry = manifest["models"][self.model_id]
         checkpoint = self.models_dir / entry["checkpoint"]
         if not checkpoint.is_file():
-            if entry.get("local_only"):
-                raise FileNotFoundError(f"Missing local confocal checkpoint {checkpoint}. Copy the pinned best.pt from the training run; see training/README.md.")
             raise FileNotFoundError(f"Missing {checkpoint}. Run python tools/download_models.py first.")
         digest = sha256(checkpoint)
         if digest != entry["sha256"]:
@@ -79,15 +77,8 @@ class Adapter:
         elif self.model_id.startswith("noise2noise-"):
             from .vendor.instant import Noise2Noise
             self.model = Noise2Noise()
-            if self.model_id == "noise2noise-confocal":
-                trained = torch.load(checkpoint, map_location="cpu", weights_only=True)
-                if trained["architecture"] != "instant-noise2noise-v1":
-                    raise ValueError("Unexpected confocal checkpoint architecture")
-                state = trained["model_state_dict"]
-                self.provenance["training"] = entry["training"]
-            else:
-                self.model.load_published(checkpoint)
-                state = self.model.state_dict()
+            self.model.load_published(checkpoint)
+            state = self.model.state_dict()
         elif self.model_id.startswith("cellpose-"):
             from .vendor.cellpose.resnet_torch import CPnet
             self.model = CPnet([1,32,64,128,256], nout=1, sz=3)

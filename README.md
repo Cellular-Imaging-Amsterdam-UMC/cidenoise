@@ -2,8 +2,31 @@
 
 Pretrained fluorescence denoising from OME-Zarr to OME-Zarr, for Bilayers/BIOMERO,
 local Windows CUDA and Linux containers. The BIOMERO workflow performs pretrained
-inference only. Optional [local confocal Noise2Noise training](training/README.md)
-is available separately; no Gradio or Jupyter interface is required.
+inference only; no training, Gradio or Jupyter interface is included.
+
+## Visual benchmark
+
+Enable **Visual benchmark (all models)** in the launcher, or pass `--benchmark` to
+`wrapper.py`. Each input image produces one PNG gallery with the original and all
+six pretrained models, overlaid in the original channel colours. HCS fields and
+timepoints each receive their own gallery. No OME-Zarr output is written in this mode.
+
+The benchmark uses Z index `Z//2` (the upper middle plane for even stacks), or the
+only plane for 2D images, and a centre 512×512 crop. Smaller images retain their
+native size. Tribolium receives its five neighboring Z planes with reflected
+boundaries. UniFMIR normalization uses the cropped Z-stack; inference restores
+only the centre plane. Every channel is included regardless of channel selection.
+
+Every panel uses the same per-channel display ranges (raw crop percentiles 1 and
+99.8) and additive colour overlay. Model selection and output dtype are ignored;
+tile/batch/precision and structure options still apply. Keep tile settings at their
+automatic defaults for model-specific presets. PNG metadata records settings,
+checkpoint identities, crop coordinates, colours and display ranges. Failed models
+are marked in the gallery and execution log, and the run returns a failure status.
+Each model panel includes elapsed processing seconds and time divided by the fastest
+successful model (1.0×). Timing includes all channels, crop reads, normalization and
+inference, excluding checkpoint/prompt loading and PNG rendering. It is a single
+local measurement, not a repeated speed benchmark.
 
 ## Quick start on this workstation
 
@@ -33,7 +56,6 @@ and explicitly pairs raw/reference stores in `localdata`.
 |---|---|---|
 | `fluoresfm` (default) | One XY plane from one channel | Per-plane 3rd/99.5th percentiles, nonnegative input, task-only prompt by default |
 | `noise2noise-fmd` | One XY plane; fast microscopy CNN | Per-plane maximum; input x/max - 0.5, inverse (y+0.5)*max |
-| `noise2noise-confocal` | Experimental; five FMD confocal categories; epoch 75; background bias observed on brain crops | Fixed x/255 - 0.5 (uint8); x/65535 - 0.5 (uint16 adaptation); float input must be [0,1] |
 | `cellpose-cyto3` / `cellpose-nuclei` | One XY plane; segmentation-oriented denoising | Per-plane 1st/99th percentiles; native pixel scale |
 | `unifmir-planaria` | One XY plane from one channel | Per-channel Z-stack 2nd/99.8th percentiles |
 | `unifmir-tribolium` | Five neighboring Z planes from one channel | Same stack normalization; reflected Z boundaries |

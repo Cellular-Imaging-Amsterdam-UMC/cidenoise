@@ -2,18 +2,6 @@
 import numpy as np
 
 
-def confocal_bounds(plane, dtype):
-    """Fixed acquisition-range scaling; never estimate a scale from each plane."""
-    dtype = np.dtype(dtype)
-    if dtype.kind == "u" and dtype.itemsize in (1, 2):
-        maximum = float(np.iinfo(dtype).max)
-    elif dtype.kind == "f" and float(plane.min()) >= 0 and float(plane.max()) <= 1:
-        maximum = 1.0
-    else:
-        raise ValueError("Confocal Noise2Noise requires uint8, uint16 or float input in [0,1]; convert acquisition intensities explicitly first")
-    return maximum / 2, maximum * 1.5, f"fixed range {maximum:g}; x/range - 0.5; trained on uint8/255"
-
-
 def histogram_percentile(counts, percentile, offset=0):
     cumulative = np.cumsum(counts)
     n = int(cumulative[-1])

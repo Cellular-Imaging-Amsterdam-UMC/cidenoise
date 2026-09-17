@@ -46,7 +46,16 @@ which explicitly pairs references. Do not point an ordinary denoising run at all
 
 ## Verify completion
 
-For each source, expect `<source>__cidenoise.ome.zarr` in the output folder. Hidden
+With `--benchmark` (launcher **Visual benchmark**), expect one `__benchmark.png`
+gallery per image/HCS field/timepoint instead of OME-Zarr. It shows the original
+and all six models on the middle Z-plane, centre 512×512 crop (smaller inputs keep
+their size), with every channel overlaid using shared raw-derived display ranges.
+Model/channel selection is ignored in this mode. Each panel gives processing
+seconds and its ratio to the fastest model, excluding checkpoint/prompt loading.
+Inspect PNG embedded `cidenoise` metadata and execution logs for errors; failed
+panels make the run fail. Do not interpret display clipping as raw-data clipping.
+
+For ordinary inference, expect `<source>__cidenoise.ome.zarr` in the output folder. Hidden
 `.partial` stores are incomplete. Check process success and completed stores, rather
 than relying only on a scheduler's completion state.
 

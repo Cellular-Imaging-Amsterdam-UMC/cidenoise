@@ -14,6 +14,7 @@ def parser():
     p.add_argument("--infolder", default="/data/in")
     p.add_argument("--outfolder", default="/data/out")
     p.add_argument("--model", choices=MODEL_IDS, default="fluoresfm")
+    p.add_argument("--benchmark", action="store_true", help="One PNG gallery per image/timepoint: original and every model, all channels, centre crop of middle Z-plane")
     p.add_argument("--channels", default="all")
     p.add_argument("--device", choices=("auto", "cuda", "cpu"), default="auto")
     p.add_argument("--tile-size", type=int, default=0, help="0: model-specific 12 GB preset")
@@ -54,6 +55,10 @@ def main(argv=None):
         handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s"))
         logging.getLogger().addHandler(handler)
         logging.info("Settings: %s", settings)
+        if args.benchmark:
+            from cidenoise.visual_benchmark import run_benchmark
+            run_benchmark(inputs, output, settings)
+            return 0
         adapter = Adapter(settings.model, settings.device, precision=settings.precision)
         for source in inputs:
             run_store(source, args.outfolder, settings, adapter)

@@ -42,24 +42,6 @@
       "upstream_revision": "fb22843e70d03f7884c301b7b72bedd7d9c3d2d9",
       "license": "BSD-3-Clause",
       "normalization": "per-plane p1,p99; scale 1 (native pixel sampling); no normalized clipping"
-    },
-    "noise2noise-confocal": {
-      "checkpoint": "confocal/best.pt",
-      "sha256": "a0c009dc9e5b863ee8a506b784e277901808e5aa84ccbe607701cff575dfd5c8",
-      "local_only": true,
-      "upstream_revision": "c885aee8adb62bcd2d5c3862273d4ea0f68b3068",
-      "license": "GPL-3.0 code; FMD training data CC-BY-SA-4.0; trained weights not publicly distributed",
-      "normalization": "fixed x/255 - 0.5 for uint8; uint16 x/65535 - 0.5 adaptation; float input [0,1] x - 0.5; inverse restores units",
-      "training": {
-        "epoch": 75,
-        "global_step": 75000,
-        "best_validation_noisy_mse": 0.0009274739277316257,
-        "dataset_sha256": "21a61c3dfd65e4f9551a574c5ad8def2dd94f13905fb29d5ebdcab2e3cef5abe",
-        "dataset": "FMD five confocal categories only",
-        "training_code_revision": "c751f20",
-        "initialization": "random",
-        "source_checkpoint_sha256": "a0c009dc9e5b863ee8a506b784e277901808e5aa84ccbe607701cff575dfd5c8"
-      }
     }
   },
   "assets": [
@@ -122,11 +104,6 @@
       "path": "cellpose/denoise_nuclei",
       "url": "https://www.cellpose.org/models/denoise_nuclei",
       "sha256": "da6dacca6c44367cb9180e4251f7f25273559e7dfb68884a608b62b9cca41d0e"
-    },
-    {
-      "path": "confocal/best.pt",
-      "sha256": "a0c009dc9e5b863ee8a506b784e277901808e5aa84ccbe607701cff575dfd5c8",
-      "local_only": true
     }
   ],
   "text_encoder": {

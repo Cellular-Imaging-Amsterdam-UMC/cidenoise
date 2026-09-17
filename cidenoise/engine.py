@@ -13,7 +13,7 @@ import zarr
 from skimage.transform import resize_local_mean
 from . import __version__
 from .ome_zarr import open_images, channels, cast_output, update_float_xml
-from .normalization import plane_bounds, stack_bounds, confocal_bounds
+from .normalization import plane_bounds, stack_bounds
 from .tiling import predict_plane, reflected_index
 
 log = logging.getLogger(__name__)
@@ -136,9 +136,7 @@ def run_store(source, outfolder, settings, adapter=None):
                         if not np.isfinite(center).all():
                             raise ValueError("Input contains NaN or infinite intensities")
                         low, high, method = volume_bounds or plane_bounds(center)
-                        if settings.model == "noise2noise-confocal":
-                            low, high, method = confocal_bounds(center, image.array.dtype)
-                        elif settings.model == "noise2noise-fmd":
+                        if settings.model == "noise2noise-fmd":
                             maximum = max(float(center.max()), 0.0)
                             low, high, method = maximum / 2, maximum * 1.5, "plane maximum; x/max - 0.5"
                         elif settings.model.startswith("cellpose-"):
