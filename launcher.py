@@ -400,6 +400,8 @@ class Window(QMainWindow):
         self.output_path.setText(data.get('output', ''))
         self.gpu.setChecked(data.get('gpu', True))
         restored_values = dict(data.get('values', {}))
+        if isinstance(restored_values.get('benchmark'), bool):
+            restored_values['benchmark'] = '2d-crop' if restored_values['benchmark'] else 'off'
         # Preserve descriptions from launcher settings saved before the eight menus.
         legacy = json.loads(restored_values.get('structures', '{}'))
         for channel, description in legacy.items():

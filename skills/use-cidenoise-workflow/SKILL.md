@@ -46,14 +46,15 @@ which explicitly pairs references. Do not point an ordinary denoising run at all
 
 ## Verify completion
 
-With `--benchmark` (launcher **Visual benchmark**), expect one `__benchmark.png`
-gallery per image/HCS field/timepoint instead of OME-Zarr. It shows the original
-and all six models on the middle Z-plane, centre 512×512 crop (smaller inputs keep
-their size), with every channel overlaid using shared raw-derived display ranges.
-Model/channel selection is ignored in this mode. Each panel gives processing
-seconds and its ratio to the fastest model, excluding checkpoint/prompt loading.
-Inspect PNG embedded `cidenoise` metadata and execution logs for errors; failed
-panels make the run fail. Do not interpret display clipping as raw-data clipping.
+`--benchmark MODE` (Visual Benchmark Gallery) accepts `off`, `2d-full`, `2d-crop`,
+`3d-full`, `3d-crop`. Enabled modes write one mode-labelled PNG per image/field/timepoint,
+with original plus all six models and every channel. Full keeps XY; crop uses central
+512x512 without shortening Z. 2D restores middle Z; 3D restores every Z-plane before
+per-channel maximum projection. Small images keep available extent. Tribolium uses
+neighboring Z context in every mode. Shared display limits come from raw plane or
+projection. Model/channel selection and output dtype are ignored. Times include all
+processed planes and projection, exclude checkpoint/prompt loading, and give ratios
+to fastest. PNG metadata/logs identify failures. Projections can hide Z-specific defects.
 
 For ordinary inference, expect `<source>__cidenoise.ome.zarr` in the output folder. Hidden
 `.partial` stores are incomplete. Check process success and completed stores, rather

@@ -69,3 +69,16 @@ Local artifacts: `outputs/validation/fluoresfm-precision-speed.json`,
 `outputs/benchmark-small-fast/report/index.html`. Data, weights and reports are ignored
 by Git. The existing v0.1.0 Docker image predates these additions and must be rebuilt
 explicitly before using the new command parameters in Docker.
+
+## Launcher gallery modes
+
+Visual Benchmark Gallery offers Off, 2D Full, 2D Crop, 3D Full, 3D Crop.
+2D restores middle Z; 3D restores every Z-plane before maximum projection. Full
+keeps XY; crop uses central 512x512 without shortening Z. Each field/timepoint gets
+one original-plus-six-model PNG. Times include reads, normalization, inference and
+projection for every requested plane/channel, excluding model/prompt loading and
+PNG rendering. Ratios divide by the fastest successful model (1.0x). Display limits
+are shared from raw plane/projection. Full/3D takes longer and projections can hide
+slice-specific artifacts. This is separate from the paired LAS-X HTML benchmark.
+See README's applicability table: device/tiles/overlap/batch/precision affect all
+models; biological structure prompts only FluoResFM; dtype only OME-Zarr inference.

@@ -60,3 +60,24 @@ def test_failure_is_visible_and_does_not_skip_other_models(tmp_path):
         run_benchmark([source],out,Settings(),Broken)
     meta=json.loads(Image.open(next(out.glob('*.png'))).info['cidenoise'])
     assert len(meta['models'])==6 and 'error' in meta['models'][0]
+
+
+@pytest.mark.parametrize('mode',['2d-full','2d-crop','3d-full','3d-crop'])
+def test_modes_process_expected_planes(tmp_path,mode):
+    source=tmp_path/'in.ome.zarr';store(source,'zyx',(3,40,48))
+    out=tmp_path/'out';Identity.calls=[]
+    run_benchmark([source],out,Settings(),Identity,mode=mode)
+    meta=json.loads(Image.open(next(out.glob('*.png'))).info['cidenoise'])
+    expected=[0,1,2] if mode.startswith('3d') else [1]
+    assert meta['z_indices']==expected and meta['benchmark_mode']==mode
+    assert len([m for m,s in Identity.calls if m=='noise2noise-fmd'])==len(expected)
+
+
+def test_full_xy_and_streaming_projection(tmp_path):
+    from cidenoise.visual_benchmark import maximum_projection
+    source=tmp_path/'in.ome.zarr';data=store(source,'zyx',(3,520,530))
+    image=open_images(source)[1][0]
+    full=Crop(image,cropped=False);cropped=Crop(image)
+    assert (full.height,full.width,full.length('z'))==(520,530,3)
+    assert (cropped.height,cropped.width,cropped.length('z'))==(512,512,3)
+    np.testing.assert_array_equal(maximum_projection(full.plane(0,0,z) for z in range(3)),data.max(axis=0))

@@ -18,18 +18,20 @@ def test_resource_presets_and_manual_override():
         Settings(precision="invalid").validate()
 
 
-def test_eight_channel_menus_and_cli_agree(monkeypatch):
+@pytest.mark.parametrize('mode',['off','2d-full','2d-crop','3d-full','3d-crop'])
+def test_eight_channel_menus_and_cli_agree(monkeypatch,mode):
     monkeypatch.setenv("QT_QPA_PLATFORM", "offscreen")
     import launcher, bilayers_cli, shlex
     from wrapper import parser
     config=launcher.load_config()
     menus=[p for p in config["parameters"] if p["name"].startswith("structure_")]
     assert len(menus)==8 and all(p["type"]=="dropdown" for p in menus)
-    values={"structure_1":"nuclei","structure_8":"neuronal processes","model":"noise2noise-fmd","benchmark":True}
+    values={"structure_1":"nuclei","structure_8":"neuronal processes","model":"noise2noise-fmd","benchmark":mode}
     local=launcher.build_local_command(config,values,"/data/in","/data/out","python")
     generated=shlex.split(bilayers_cli.generate_cli_command(config,dict(values,infolder="/data/in",outfolder="/data/out")))
     a,b=parser().parse_args(local[2:]),parser().parse_args(generated[2:])
     assert vars(a)==vars(b)
+    assert a.benchmark==mode
     assert a.structure_8=="neuronal processes" and a.precision=="auto"
 
 
@@ -44,7 +46,8 @@ def test_launcher_preserves_legacy_custom_descriptions(monkeypatch):
     import launcher
     app=launcher.QApplication.instance() or launcher.QApplication([])
     window=launcher.Window()
-    window._apply_settings({"values":{"structures":'{"2":"fine dendritic processes"}'}})
+    window._apply_settings({"values":{"structures":'{"2":"fine dendritic processes"}',"benchmark":True}})
+    assert window.values()['benchmark']=='2d-crop'
     assert window.values()["structure_2"]=="fine dendritic processes"
     assert window.values()["structure_1"]=="task-only"
     window.close()

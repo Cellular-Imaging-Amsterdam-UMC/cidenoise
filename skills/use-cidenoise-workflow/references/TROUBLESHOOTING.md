@@ -20,7 +20,7 @@ An ordinary exception cleans up the temporary output owned by that run. A force-
 process may leave it behind. Completed outputs are published only after processing and
 metadata finalization succeed; the original input remains read-only.
 
-For benchmark failures, retain `outputs/benchmark/frozen.json`: it contains the brain1
+For paired LAS-X benchmark failures, retain `outputs/benchmark/frozen.json`: it contains the brain1
 calibration, settings, and manifest hash used for brain2. Use a new benchmark output
 folder to change settings. Similarity to LAS-X is a processed-reference comparison,
 not proof that faint structures are real or preserved.

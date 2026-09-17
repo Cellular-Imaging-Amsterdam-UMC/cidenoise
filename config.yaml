@@ -54,10 +54,10 @@ outputs:
     pyramidal: true
 display_only: []
 parameters:
-  - {name: benchmark, type: checkbox, label: Visual benchmark (all models), description: "PNG overlays of all channels on the middle Z-plane and centre 512x512 crop. Ignores model/channel selection; no OME-Zarr output.", default: false, cli_tag: --benchmark, cli_order: 9, optional: true, section_id: essential, mode: beginner}
+  - {name: channels, type: string, label: Channels, description: 'all or one-based numbers such as 1,3', default: all, cli_tag: --channels, cli_order: 9, optional: true, section_id: essential, mode: beginner}
   - name: model
     type: dropdown
-    label: Pretrained model
+    label: Pretrained Model
     description: Explicit checkpoint selection; no training or automatic model substitution.
     options:
       - {label: FluoResFM, value: fluoresfm}
@@ -72,23 +72,35 @@ parameters:
     optional: true
     section_id: essential
     mode: beginner
-  - {name: channels, type: string, label: Channels, description: 'all or one-based numbers such as 1,3', default: all, cli_tag: --channels, cli_order: 11, optional: true, section_id: essential, mode: beginner}
+  - name: benchmark
+    type: dropdown
+    label: Visual Benchmark Gallery
+    description: All models and channels; PNG gallery only. 2D shows the middle Z-plane; 3D processes all Z and shows a maximum projection. Crop uses centre 512x512 XY.
+    options: [{label: "Off", value: 'off'}, {label: 2D Full, value: 2d-full}, {label: 2D Crop, value: 2d-crop}, {label: 3D Full, value: 3d-full}, {label: 3D Crop, value: 3d-crop}]
+    default: 'off'
+    cli_tag: --benchmark
+    cli_order: 11
+    optional: true
+    section_id: essential
+    mode: beginner
   - name: device
     type: dropdown
-    label: Compute device
+    label: Compute Device
+    description: All models; automatic selects CUDA when available and CPU otherwise.
     options: [{label: Automatic, value: auto}, {label: NVIDIA CUDA, value: cuda}, {label: CPU, value: cpu}]
     default: auto
     cli_tag: --device
     cli_order: 12
     optional: true
-    section_id: essential
-    mode: beginner
-  - {name: tile_size, type: integer, label: Tile size (pixels), description: '0 selects model preset; manual values must be at least 64 and divisible by 8 (32 for Noise2Noise).', default: 0, minimum: 0, maximum: 2048, cli_tag: --tile-size, cli_order: 20, optional: true, section_id: advanced, mode: advanced}
-  - {name: overlap, type: integer, label: Tile overlap (pixels), description: -1 selects model preset; otherwise smaller than tile size., default: -1, minimum: -1, maximum: 2047, cli_tag: --overlap, cli_order: 21, optional: true, section_id: advanced, mode: advanced}
-  - {name: batch_size, type: integer, label: Tile batch size (0 = preset), default: 0, minimum: 0, maximum: 128, cli_tag: --batch-size, cli_order: 22, optional: true, section_id: advanced, mode: advanced}
+    section_id: advanced
+    mode: advanced
+  - {name: tile_size, type: integer, label: Tile size (pixels), description: 'All models. 0 selects model preset; manual values must be at least 64 and divisible by 8 (32 for Noise2Noise).', default: 0, minimum: 0, maximum: 2048, cli_tag: --tile-size, cli_order: 20, optional: true, section_id: advanced, mode: advanced}
+  - {name: overlap, type: integer, label: Tile overlap (pixels), description: All models. -1 selects model preset; otherwise smaller than tile size., default: -1, minimum: -1, maximum: 2047, cli_tag: --overlap, cli_order: 21, optional: true, section_id: advanced, mode: advanced}
+  - {name: batch_size, type: integer, label: Tile batch size (0 = preset), description: "All models; more tiles per batch use more GPU memory.", default: 0, minimum: 0, maximum: 128, cli_tag: --batch-size, cli_order: 22, optional: true, section_id: advanced, mode: advanced}
   - name: output_dtype
     type: dropdown
     label: Output data type
+    description: All models in ordinary OME-Zarr mode; ignored by PNG galleries.
     options: [{label: Preserve source dtype, value: source}, {label: Float32, value: float32}]
     default: source
     cli_tag: --output-dtype
@@ -96,11 +108,11 @@ parameters:
     optional: true
     section_id: advanced
     mode: advanced
-  - {name: precision, type: dropdown, label: Inference precision, options: [{label: Automatic (FP16 FluoResFM CUDA), value: auto}, {label: Float32 reference, value: float32}, {label: Float16 CUDA, value: float16}], default: auto, cli_tag: --precision, cli_order: 24, optional: true, section_id: advanced, mode: advanced}
+  - {name: precision, type: dropdown, label: Inference precision, description: "All models. Auto uses FP16 only for FluoResFM CUDA; FP32 otherwise. Explicit FP16 requires CUDA.", options: [{label: Automatic (FP16 FluoResFM CUDA), value: auto}, {label: Float32 reference, value: float32}, {label: Float16 CUDA, value: float16}], default: auto, cli_tag: --precision, cli_order: 24, optional: true, section_id: advanced, mode: advanced}
   - name: structure_1
     type: dropdown
     label: Channel 1 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -135,7 +147,7 @@ parameters:
   - name: structure_2
     type: dropdown
     label: Channel 2 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -170,7 +182,7 @@ parameters:
   - name: structure_3
     type: dropdown
     label: Channel 3 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -205,7 +217,7 @@ parameters:
   - name: structure_4
     type: dropdown
     label: Channel 4 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -240,7 +252,7 @@ parameters:
   - name: structure_5
     type: dropdown
     label: Channel 5 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -275,7 +287,7 @@ parameters:
   - name: structure_6
     type: dropdown
     label: Channel 6 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -310,7 +322,7 @@ parameters:
   - name: structure_7
     type: dropdown
     label: Channel 7 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only
@@ -345,7 +357,7 @@ parameters:
   - name: structure_8
     type: dropdown
     label: Channel 8 structure
-    description: Optional biological description; task-only adds no structure prompt.
+    description: FluoResFM only; ignored by other models. Task-only adds no biological structure prompt.
     options:
     - label: Task only / unspecified
       value: task-only

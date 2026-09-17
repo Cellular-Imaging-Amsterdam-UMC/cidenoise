@@ -18,11 +18,14 @@ PALETTE=('FF0000','00FF00','0000FF','FF00FF','00FFFF','FFFF00','FF8000','FFFFFF'
 
 
 class Crop:
-    def __init__(self,image):
+    def __init__(self,image,cropped=True):
         self.image=image
         self.y0=max(0,(image.length('y')-512)//2)
         self.x0=max(0,(image.length('x')-512)//2)
         self.height=min(512,image.length('y'));self.width=min(512,image.length('x'))
+        if not cropped:
+            self.y0=self.x0=0
+            self.height=image.length('y');self.width=image.length('x')
         self.array=image.array
 
     def length(self,axis):
@@ -59,13 +62,13 @@ def overlay(planes,specs):
     return PILImage.fromarray(np.rint(np.clip(rgb,0,1)*255).astype(np.uint8))
 
 
-def restored(crop,t,z,c,settings,adapter):
+def restored(crop,t,z,c,settings,adapter,bounds=None):
     center=crop.plane(t,c,z)
     if not np.isfinite(center).all():
         raise ValueError('Nonfinite input pixels')
     if center.min()==center.max() and adapter.context==1:
         return center
-    low,high,_=stack_bounds(crop,t,c) if settings.model.startswith('unifmir') else plane_bounds(center)
+    low,high,_=bounds or (stack_bounds(crop,t,c) if settings.model.startswith('unifmir') else plane_bounds(center))
     if settings.model=='noise2noise-fmd':
         maximum=max(float(center.max()),0.)
         low,high=maximum/2,maximum*1.5
@@ -83,8 +86,22 @@ def restored(crop,t,z,c,settings,adapter):
                          adapter.predict,settings.tile_size,settings.overlap,settings.batch_size)*scale+low
 
 
-def run_benchmark(sources,outfolder,settings,adapter_factory=Adapter):
+def maximum_projection(planes):
+    result=None
+    for plane in planes:
+        if not np.isfinite(plane).all():
+            raise ValueError('Nonfinite pixels in benchmark')
+        if result is None:
+            result=plane.copy()
+        else:
+            np.maximum(result,plane,out=result)
+    return result
+
+
+def run_benchmark(sources,outfolder,settings,adapter_factory=Adapter,mode='2d-crop'):
     import torch
+    if mode not in ('2d-full','2d-crop','3d-full','3d-crop'):
+        raise ValueError('Expected an enabled benchmark mode')
     outfolder=Path(outfolder).resolve();outfolder.mkdir(parents=True,exist_ok=True)
     jobs=[]
     for source in sources:
@@ -94,14 +111,15 @@ def run_benchmark(sources,outfolder,settings,adapter_factory=Adapter):
         _,images=open_images(source)
         for field,image in enumerate(images):
             for t in range(image.length('t')):
-                destination=outfolder/f'{source.name.removesuffix(".ome.zarr")}__field{field:04d}__t{t:04d}__benchmark.png'
+                destination=outfolder/f'{source.name.removesuffix(".ome.zarr")}__field{field:04d}__t{t:04d}__{mode}__benchmark.png'
                 if destination.exists():
                     raise FileExistsError(f'Benchmark already exists: {destination}')
                 jobs.append((source,image,t,destination))
     failures=[]
     for source,image,t,destination in jobs:
-        crop=Crop(image);z=image.length('z')//2
-        raw=[crop.plane(t,c,z) for c in range(image.length('c'))]
+        crop=Crop(image,cropped=mode.endswith('crop'));z=image.length('z')//2
+        indices=range(image.length('z')) if mode.startswith('3d') else [z]
+        raw=[maximum_projection(crop.plane(t,c,zi) for zi in indices) for c in range(image.length('c'))]
         specs=display(raw,image)
         panels=[('Original',overlay(raw,specs))];records=[]
         for identifier in MODEL_IDS:
@@ -121,13 +139,14 @@ def run_benchmark(sources,outfolder,settings,adapter_factory=Adapter):
                 predicted=[]
                 for c in range(image.length('c')):
                     adapter.set_structure(descriptions.get(str(c+1),''))
-                    predicted.append(restored(crop,t,z,c,chosen,adapter))
+                    bounds=stack_bounds(crop,t,c) if identifier.startswith('unifmir') else None
+                    predicted.append(maximum_projection(restored(crop,t,zi,c,chosen,adapter,bounds) for zi in indices))
                 if chosen.device != 'cpu' and torch.cuda.is_available():
                     torch.cuda.synchronize()
                 elapsed=time.perf_counter()-started
                 panels.append((identifier,overlay(predicted,specs)))
                 records.append(dict(model=identifier,processing_seconds=elapsed,settings=vars(chosen),provenance=adapter.provenance))
-                LOG.info('Benchmark %s field=%s T=%d Z=%d: %s complete',source.name,image.path,t,z,identifier)
+                LOG.info('Benchmark %s field=%s T=%d mode=%s Z planes=%d: %s complete',source.name,image.path,t,mode,len(indices),identifier)
             except Exception as exc:
                 LOG.exception('Benchmark model %s failed',identifier)
                 failures.append(f'{destination.name}: {identifier}: {exc}')
@@ -147,10 +166,11 @@ def run_benchmark(sources,outfolder,settings,adapter_factory=Adapter):
         canvas=PILImage.new('RGB',(columns*cell_w,120+2*cell_h+24*len(specs)),'#151a22')
         draw=ImageDraw.Draw(canvas)
         draw.font=ImageFont.load_default(size=16)
-        draw.text((12,10),f'{source.name} | field {image.path or "/"} | T={t} Z={z} (zero-based)',fill='white')
-        draw.text((12,32),f'Centre crop: X={crop.x0}, Y={crop.y0}, {crop.width} x {crop.height}; all channels',fill='white')
+        view=f'Z maximum projection of all {image.length("z")} planes' if mode.startswith('3d') else f'Z={z} (zero-based)'
+        draw.text((12,10),f'{source.name} | field {image.path or "/"} | T={t} | {view}',fill='white')
+        draw.text((12,32),f'{mode}: X={crop.x0}, Y={crop.y0}, {crop.width} x {crop.height}; all channels',fill='white')
         draw.text((12,54),'Same raw-derived display ranges in every panel; additive colour overlay; no intensity matching.',fill='white')
-        draw.text((12,76),'Times: all channels, crop reads + normalization + inference; excludes model/prompt loading. Fastest = 1.0x.',fill='white')
+        draw.text((12,76),'Times: all requested Z/channels, reads + normalization + inference + projection; excludes model/prompt loading. Fastest = 1.0x.',fill='white')
         for i,(label,panel) in enumerate(panels):
             x=(i%columns)*cell_w;y=120+(i//columns)*cell_h
             draw.text((x+8,y+8),label,fill='white')
@@ -161,7 +181,8 @@ def run_benchmark(sources,outfolder,settings,adapter_factory=Adapter):
         for c,spec in enumerate(specs):
             draw.text((12,120+2*cell_h+24*c),f'{c+1}: {spec["label"]} | display {spec["low"]:.3g} .. {spec["high"]:.3g}',fill='#'+spec['color'])
         metadata=PngImagePlugin.PngInfo()
-        metadata.add_text('cidenoise',json.dumps(dict(source=source.name,field=image.path,t=t,z=z,
+        metadata.add_text('cidenoise',json.dumps(dict(source=source.name,field=image.path,t=t,z=z if mode.startswith('2d') else None,
+            benchmark_mode=mode,z_indices=list(indices),projection='maximum' if mode.startswith('3d') else 'none',
             crop=dict(x=crop.x0,y=crop.y0,width=crop.width,height=crop.height),display=specs,models=records)))
         temporary=destination.with_name('.'+destination.name+'.'+uuid.uuid4().hex+'.partial')
         try:

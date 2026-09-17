@@ -6,27 +6,56 @@ inference only; no training, Gradio or Jupyter interface is included.
 
 ## Visual benchmark
 
-Enable **Visual benchmark (all models)** in the launcher, or pass `--benchmark` to
-`wrapper.py`. Each input image produces one PNG gallery with the original and all
-six pretrained models, overlaid in the original channel colours. HCS fields and
-timepoints each receive their own gallery. No OME-Zarr output is written in this mode.
+Choose **Visual Benchmark Gallery** in the launcher or `--benchmark MODE`:
 
-The benchmark uses Z index `Z//2` (the upper middle plane for even stacks), or the
-only plane for 2D images, and a centre 512×512 crop. Smaller images retain their
-native size. Tribolium receives its five neighboring Z planes with reflected
-boundaries. UniFMIR normalization uses the cropped Z-stack; inference restores
-only the centre plane. Every channel is included regardless of channel selection.
+| Mode | XY region | Z processing / gallery view |
+|---|---|---|
+| Off (`off`, default) | Normal workflow | Selected model/channels; OME-Zarr output |
+| 2D Full (`2d-full`) | Full image | Middle Z-plane |
+| 2D Crop (`2d-crop`) | Centre 512x512 | Middle Z-plane |
+| 3D Full (`3d-full`) | Full image | All Z restored, then maximum projection |
+| 3D Crop (`3d-crop`) | Centre 512x512 | All Z restored, then maximum projection |
 
-Every panel uses the same per-channel display ranges (raw crop percentiles 1 and
-99.8) and additive colour overlay. Model selection and output dtype are ignored;
-tile/batch/precision and structure options still apply. Keep tile settings at their
-automatic defaults for model-specific presets. PNG metadata records settings,
-checkpoint identities, crop coordinates, colours and display ranges. Failed models
-are marked in the gallery and execution log, and the run returns a failure status.
-Each model panel includes elapsed processing seconds and time divided by the fastest
-successful model (1.0×). Timing includes all channels, crop reads, normalization and
-inference, excluding checkpoint/prompt loading and PNG rendering. It is a single
-local measurement, not a repeated speed benchmark.
+Enabled modes write **one PNG gallery per image/HCS field/timepoint**, original plus
+all six models, with all channels overlaid; no OME-Zarr output. Smaller images keep
+available XY dimensions. The middle plane is `Z//2` (upper middle for even stacks).
+2D inputs work in all modes as one-plane stacks. 3D restores **every Z-plane before
+projection**, rather than denoising an input projection. Crop never shortens Z.
+Most models remain plane-wise; Tribolium receives five neighboring Z planes with
+reflection in every mode. UniFMIR normalization uses all Z in the selected XY region.
+Projections can hide slice-specific artifacts. Filenames include the mode.
+
+Panels share source channel colours and per-channel raw display percentiles 1/99.8,
+fitted to the raw plane or maximum projection. No per-model brightness matching.
+Model selection, channel selection and output dtype are ignored for galleries.
+Each panel gives processing seconds and time divided by the fastest successful model
+(1.0x). Times include all requested planes/channels, reads, normalization, inference
+and projection, excluding checkpoint/prompt loading and PNG rendering. This is a
+single local measurement, not repeated benchmarking. Full/3D can be much slower.
+PNG metadata records mode, Z indices, crop, settings, checkpoint hashes and display
+ranges. Failed models are marked and the run returns failure. Existing PNGs are
+never overwritten. A legacy bare `--benchmark` means `2d-crop`; old saved checkbox
+settings migrate to `off` / `2d-crop`.
+
+### Advanced settings and model applicability
+
+Basic order: **Channels, Pretrained Model, Visual Benchmark Gallery**.
+Compute Device is under Advanced. Most advanced options apply to all models:
+
+| Advanced setting | Applies to / purpose |
+|---|---|
+| Compute Device | All: auto selects CUDA when available, otherwise CPU; explicit CUDA fails if unavailable. |
+| Tile size | All: XY patch size, larger uses more GPU memory. 0 selects model preset. At least 64 and divisible by 8; Noise2Noise requires multiples of 32. |
+| Tile overlap | All: shared margins blended to reduce seams; more overlap increases compute. -1 selects model preset. |
+| Tile batch size | All: tiles inferred together; larger batches require more GPU memory. 0 selects model preset. |
+| Output data type | All, ordinary OME-Zarr only: source rounds/clips; float32 retains floating values. Ignored by galleries. |
+| Inference precision | All: auto uses FP16 for FluoResFM CUDA, FP32 otherwise. Explicit FP16 requires CUDA; FP32 avoids reduced-precision effects. |
+| Channel 1-8 structure / --structures | FluoResFM only: optional biological prompt; task-only adds no structure description. Ignored by UniFMIR, Noise2Noise and Cellpose. |
+
+Preset tile/overlap/batch: FluoResFM 64/16/16; UniFMIR 64/16/4; Noise2Noise 512/128/2;
+Cellpose 224/64/8. Auto presets resolve separately per gallery model. Manual overrides
+apply to every model and must be compatible with all six. No option trains models
+or silently substitutes another checkpoint.
 
 ## Quick start on this workstation
 

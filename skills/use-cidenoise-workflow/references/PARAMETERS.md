@@ -8,7 +8,7 @@ launcher and Bilayers descriptor use the same parameter contract.
 | `--infolder` | `/data/in` | Top-level NGFF 0.4/Zarr v2 `.ome.zarr` images or HCS plates; set explicitly for local runs. |
 | `--outfolder` | `/data/out` | Separate writable destination; existing output stores are rejected. |
 | `--model` | `fluoresfm` | Explicit checkpoint choice; alternatives: `unifmir-planaria`, `unifmir-tribolium`, `noise2noise-fmd`, `cellpose-cyto3`, `cellpose-nuclei`. |
-| `--benchmark` | off | One PNG gallery per image/field/timepoint, original plus all models; all-channel overlays, middle Z, centre 512×512, processing times and ratios to fastest. No OME-Zarr output. |
+| `--benchmark` | off | off, 2d-full, 2d-crop, 3d-full, 3d-crop. Full keeps XY; crop uses centre 512x512. 2D restores middle Z; 3D restores all Z then maximum projection. One all-model PNG with times; no OME-Zarr. |
 | `--channels` | `all` | One-based channel numbers, e.g. `1,3`; keep other channels unchanged. |
 | `--device` | `auto` | CUDA when available, otherwise CPU; explicit `cuda` fails if unavailable. |
 | `--tile-size` | `0` (model preset) | XY tile edge, at least 64 and divisible by 8. Larger tiles increase memory use. |
@@ -56,3 +56,13 @@ For fast paired validation, `python tools/make_benchmark_crops.py` creates new s
 under `outputs/benchmark-small-inputs` without modifying `localdata`. Run
 `python -m cidenoise.benchmark --localdata outputs/benchmark-small-inputs --output outputs/benchmark-small-fast`.
 Crops are for screening; they do not establish full-volume performance.
+
+## Advanced applicability
+
+Basic order: Channels, Pretrained Model, Visual Benchmark Gallery. Device is advanced.
+Device, tile size, overlap, batch size and precision apply to all models. Larger
+patches/batches use more memory; overlap reduces seams at extra compute cost.
+Structure menus/JSON apply only to FluoResFM. Output dtype only affects ordinary
+OME-Zarr, not galleries. Auto presets resolve per model; manual overrides apply to
+all gallery models. FP16 requires CUDA; auto uses it for FluoResFM CUDA only.
+3D timings include all Z planes and projection. Bare legacy --benchmark means 2d-crop.
