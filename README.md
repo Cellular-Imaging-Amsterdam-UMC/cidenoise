@@ -76,8 +76,7 @@ runtime assets occupy roughly 3.6 GB. Downloading is separate from inference.
 ```
 
 Place only intended inference inputs in `inputfolder`. The normal workflow processes
-every top-level `.ome.zarr`, including names ending in `-dn`; the benchmark separately
-and explicitly pairs raw/reference stores in `localdata`.
+every top-level `.ome.zarr`. Visual benchmark modes process each input independently.
 
 ## Models and parameters
 
@@ -92,8 +91,8 @@ and explicitly pairs raw/reference stores in `localdata`.
 These are pretrained models from other specimen domains. Their names describe training
 data, not detected specimen classes. No model is silently substituted on failure.
 
-Basic parameters are `--model`, `--channels all` (or one-based `1,3`), and
-`--device auto|cuda|cpu`. The launcher has eight channel structure menus;
+Basic parameters are `--channels all` (or one-based `1,3`), `--model`, and
+`--benchmark`. Compute device (`--device auto|cuda|cpu`) is advanced. The launcher has eight channel structure menus;
 `--structure-1 nuclei` through `--structure-8` provide the same choices in the CLI.
 Task-only is the default. Legacy `--structures` JSON remains available in the CLI.
 Descriptions affect FluoResFM only and are never inferred from channel colors.
@@ -104,16 +103,11 @@ presets for a 12 GB GPU / 16 GB RAM workstation. Explicit values override preset
 `--precision float32` for the reference path. Output dtype remains source by default.
 Compilation remains disabled. See [performance and presets](docs/performance.md).
 
-For quick comparisons, run `python tools/make_benchmark_crops.py` once, then:
+For quick visual comparisons, select **2D Crop** in the launcher or run:
 
 ```powershell
-python -m cidenoise.benchmark --localdata outputs/benchmark-small-inputs --output outputs/benchmark-small-fast
+python wrapper.py --infolder inputfolder --outfolder outputfolder --benchmark 2d-crop
 ```
-
-The four matched crop stores contain all channels: brain1 is 4x6x256x256 and brain2
-4x4x256x256, each with its LAS-X reference. Raw inputs alone are denoised by this
-benchmark. Spatial coordinates and source pixels are preserved; these are standalone
-single-resolution NGFF stores. Their report is `outputs/benchmark-small-fast/report/index.html`.
 
 Model assets and tokenizer files are verified and loaded from `models/`, or from
 `CIDENOISE_MODELS`. Missing/corrupt assets fail with an actionable error. Runtime sets
@@ -147,30 +141,6 @@ directory, which is never treated as a completed result.
 The root `cidenoise` attributes record checkpoint hashes, software versions, normalization
 per plane, prompts, timings, clipping and GPU memory. Per-store elapsed time excludes
 initial model loading, which is recorded separately under model provenance.
-
-## Local comparison with LAS-X
-
-```powershell
-& "$env:LOCALAPPDATA\miniconda3\envs\cidenoise\python.exe" -m cidenoise.benchmark
-```
-
-The benchmark explicitly uses `brain1`/`brain1-dn` and `brain2`/`brain2-dn`, with all
-channels and Z planes. It writes full stores beneath `outputs/benchmark/<model>/` and
-an HTML report at `outputs/benchmark/report/index.html`. Completed stores can be reused
-on a resumed run after settings validation. Use a new output directory to change settings.
-
-LAS-X is a processed comparison reference, not ground truth. The supplied LAS-X values
-are often about ten times higher than the raw values. A per-channel reference-to-raw
-affine mapping is fitted on brain1 and frozen for brain2. Alignment is checked before
-similarity metrics. Raw intensity differences are reported separately from PSNR/SSIM
-against the scaled reference. No automatic winner is selected.
-
-Panels include central XY, a fixed central crop, XZ, maximum projection and signed
-residuals. Display ranges are shared and fixed from brain1. XZ images are stretched for
-inspection. Review weak puncta, fine processes, background texture and introduced or
-removed structures; similarity alone cannot establish biological fidelity.
-Optional manual observations saved as `report/review.html` are linked by the report
-generator and retained when the figures and metrics are regenerated.
 
 ## Docker and BIOMERO
 

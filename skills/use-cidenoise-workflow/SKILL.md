@@ -39,10 +39,9 @@ revision, options, assets, and container tag.
    revision with the run update. Submit once and retain the process/container/job ID.
    Monitor that run and its logs; a delayed status response is not a reason to resubmit.
 
-The normal wrapper processes **every top-level `.ome.zarr`**, including `-dn` stores.
-For raw/LAS-X comparisons use the separate `python -m cidenoise.benchmark` command,
-which explicitly pairs references. Do not point an ordinary denoising run at all of
-`localdata` unless the user intends to process every store there.
+The wrapper processes every top-level `.ome.zarr` independently. Place only intended
+inputs in its input folder. Use the Visual Benchmark Gallery modes to compare the
+original image with all six models without producing denoised stores.
 
 ## Verify completion
 

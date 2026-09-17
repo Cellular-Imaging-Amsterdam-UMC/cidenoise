@@ -52,11 +52,6 @@ and at most 80% of detected device capacity. This excludes allocations outside P
 manual overrides can still exhaust memory. Noise2Noise tiles require multiples of 32.
 Cellpose uses native pixel scale without diameter rescaling; review fine structures.
 
-For fast paired validation, `python tools/make_benchmark_crops.py` creates new stores
-under `outputs/benchmark-small-inputs` without modifying `localdata`. Run
-`python -m cidenoise.benchmark --localdata outputs/benchmark-small-inputs --output outputs/benchmark-small-fast`.
-Crops are for screening; they do not establish full-volume performance.
-
 ## Advanced applicability
 
 Basic order: Channels, Pretrained Model, Visual Benchmark Gallery. Device is advanced.

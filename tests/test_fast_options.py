@@ -1,8 +1,4 @@
-import json
-from pathlib import Path
-import numpy as np
 import pytest
-import zarr
 from cidenoise.engine import Settings
 from cidenoise.vendor.instant import ArrayUnpickler
 
@@ -51,18 +47,3 @@ def test_launcher_preserves_legacy_custom_descriptions(monkeypatch):
     assert window.values()["structure_2"]=="fine dendritic processes"
     assert window.values()["structure_1"]=="task-only"
     window.close()
-
-
-def test_crop_exact_pixels_and_coordinates(tmp_path):
-    from tools.make_benchmark_crops import crop
-    source=tmp_path/"source.ome.zarr";target=tmp_path/"small.ome.zarr"
-    data=np.arange(2*5*12*12,dtype=">u2").reshape(2,5,12,12)
-    g=zarr.open_group(str(source),mode="w");g.create_dataset("0",data=data)
-    g.attrs["multiscales"]=[dict(version="0.4",axes=[dict(name=a,type="channel" if a=="c" else "space") for a in "czyx"],datasets=[dict(path="0",coordinateTransformations=[dict(type="scale",scale=[1,.3,.07,.07]),dict(type="translation",translation=[0,1,2,3])])])]
-    crop(source,target,(1,3,4),(3,6,6))
-    out=zarr.open_group(str(target),mode="r")
-    np.testing.assert_array_equal(out["0"][:],data[:,1:4,3:9,4:10])
-    np.testing.assert_allclose(out.attrs["multiscales"][0]["datasets"][0]["coordinateTransformations"][1]["translation"],[0,1.3,2.21,3.28])
-    np.testing.assert_array_equal(g["0"][:],data)
-    with pytest.raises(FileExistsError):
-        crop(source,target,(1,3,4),(3,6,6))
