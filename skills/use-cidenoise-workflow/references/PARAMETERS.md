@@ -7,7 +7,7 @@ launcher and Bilayers descriptor use the same parameter contract.
 |---|---|---|
 | `--infolder` | `/data/in` | Top-level NGFF 0.4/Zarr v2 `.ome.zarr` images or HCS plates; set explicitly for local runs. |
 | `--outfolder` | `/data/out` | Separate writable destination; existing output stores are rejected. |
-| `--model` | `fluoresfm` | Explicit checkpoint choice; alternatives: `unifmir-planaria`, `unifmir-tribolium`, `noise2noise-fmd`, `cellpose-cyto3`, `cellpose-nuclei`. |
+| `--model` | `noise2noise-fmd` | Explicit checkpoint choice; alternatives: `fluoresfm`, `unifmir-planaria`, `unifmir-tribolium`, `cellpose-cyto3`, `cellpose-nuclei`. |
 | `--benchmark` | off | off, 2d-full, 2d-crop, 3d-full, 3d-crop. Full keeps XY; crop uses centre 512x512. 2D restores middle Z; 3D restores all Z then maximum projection. One all-model PNG with times; no OME-Zarr. |
 | `--channels` | `all` | One-based channel numbers, e.g. `1,3`; keep other channels unchanged. |
 | `--device` | `auto` | CUDA when available, otherwise CPU; explicit `cuda` fails if unavailable. |

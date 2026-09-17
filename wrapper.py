@@ -13,7 +13,7 @@ def parser():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--infolder", default="/data/in")
     p.add_argument("--outfolder", default="/data/out")
-    p.add_argument("--model", choices=MODEL_IDS, default="fluoresfm")
+    p.add_argument("--model", choices=MODEL_IDS, default="noise2noise-fmd")
     p.add_argument("--benchmark", nargs="?", const="2d-crop", default="off", choices=("off", "2d-full", "2d-crop", "3d-full", "3d-crop"), help="PNG gallery mode; 3D processes all Z and displays a maximum projection")
     p.add_argument("--channels", default="all")
     p.add_argument("--device", choices=("auto", "cuda", "cpu"), default="auto")

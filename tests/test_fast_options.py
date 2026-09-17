@@ -8,7 +8,7 @@ from cidenoise.vendor.instant import ArrayUnpickler
 
 
 def test_resource_presets_and_manual_override():
-    assert (Settings().resolved().tile_size, Settings().resolved().batch_size) == (64,16)
+    assert (Settings().resolved().tile_size, Settings().resolved().batch_size) == (512,2)
     assert Settings(model="noise2noise-fmd").resolved().tile_size == 512
     assert Settings(model="cellpose-cyto3").resolved().tile_size == 224
     assert Settings(batch_size=2).resolved().batch_size == 2

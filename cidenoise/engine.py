@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 @dataclass
 class Settings:
-    model: str = "fluoresfm"
+    model: str = "noise2noise-fmd"
     channels: str = "all"
     device: str = "auto"
     tile_size: int = 0

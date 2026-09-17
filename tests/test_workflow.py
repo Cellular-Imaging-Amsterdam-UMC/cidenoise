@@ -151,7 +151,7 @@ def test_reflection_and_histogram():
 
 def test_invalid_inputs(tmp_path):
     source, _ = fixture_store(tmp_path)
-    for settings in (Settings(channels="0"), Settings(tile_size=65), Settings(overlap=64), Settings(structures='[]')):
+    for settings in (Settings(channels="0"), Settings(tile_size=65), Settings(tile_size=64, overlap=64), Settings(structures='[]')):
         with pytest.raises(ValueError):
             run_store(source, tmp_path / "out", settings, Identity())
     group = zarr.open(str(source), mode="a")
